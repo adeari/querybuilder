@@ -1,0 +1,5 @@
+<window width="80%" title="Session Timeout" border="normal">
+	<vbox>
+Sudah lama tidak di akses tekan F5 atau refresh halman ini.
+	</vbox>
+</window>

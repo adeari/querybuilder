@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+	Created by ZK Studio
+-->
+
+<zk>
+    <library-property>
+	    <name>org.zkoss.zul.nativebar</name>
+	    <value>true</value>
+	</library-property>
+	<library-property>
+	    <name>org.zkoss.theme.preferred</name>
+	    <value>atlantic</value> <!-- breeze, sapphire, silvertail, atlantic -->
+	</library-property>
+	<device-config>
+		<device-type>ajax</device-type>
+		<timeout-uri>/timeout.zul</timeout-uri>
+	</device-config>
+</zk>

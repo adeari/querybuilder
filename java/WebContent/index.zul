@@ -1,0 +1,3 @@
+<?style href="css/main.css.dsp" type="text/css" ?>
+<?page title="Query Builder"?>
+<window id="windowMain" apply="apps.controller.mainWindows"/>
