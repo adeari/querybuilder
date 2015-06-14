@@ -41,10 +41,11 @@ public class Users implements Serializable {
 		
 	}
 	
-	public Users(String username1, String pass1, String divisi1) {
+	public Users(String username1, String pass1, String divisi1, boolean isdeleted1) {
 		username = username1;
 		pass = pass1;
 		divisi = divisi1;
+		isdeleted = isdeleted1;
 	}
 
 	public Integer getId() {

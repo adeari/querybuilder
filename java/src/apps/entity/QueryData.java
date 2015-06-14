@@ -29,7 +29,7 @@ public class QueryData implements Serializable  {
 	@Column(name = "connection_string", nullable = false)
 	private String connectionString;
 	
-	@Column(name = "sql", unique = true, nullable = false)
+	@Column(name = "sql_query", unique = true, nullable = false)
 	private String sql;
 	
 	@ManyToOne
@@ -49,6 +49,23 @@ public class QueryData implements Serializable  {
 
 	@Column(name = "named", unique = true, nullable = false, length = 200)
 	private String named;
+	
+	public QueryData(String driver1, String connectionString1, String named1, String sql1,
+			Users createdBy1, Users modifiedBy1, java.util.Date createdAt1
+			, java.util.Date modifiedAt1) {
+		driver = driver1;
+		connectionString = connectionString1;
+		named = named1;
+		sql = sql1;
+		createdBy = createdBy1;
+		modifiedBy = modifiedBy1;
+		createdAt = new java.sql.Timestamp(createdAt1.getTime());
+		modifiedAt = new java.sql.Timestamp(modifiedAt1.getTime());
+	}
+	
+	public QueryData() {
+		
+	}
 
 	public Integer getId() {
 		return id;

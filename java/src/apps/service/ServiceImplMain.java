@@ -47,14 +47,12 @@ public class ServiceImplMain implements ServiceMain {
 	
 	
 	public String getPropSetting(String key) {
-		System.out.println(key);
 		try {
 			InputStream  input = ServiceImplMain.class.getClassLoader().getResourceAsStream(_fileproperties);
 			
 			Properties prop = new Properties();
 			prop.load(input);
 			
-			System.out.println(prop.getProperty(key));
 			return prop.getProperty(key);
 		} catch (FileNotFoundException ex) {
 			logger.error(ex.getMessage(), ex);
@@ -163,7 +161,6 @@ public class ServiceImplMain implements ServiceMain {
 					return labelResult;
 				}
 			} else {
-				System.out.println(sql);
 				preparedStatement.executeUpdate();
 				Label labelResult = new Label("Process Done");
 				return labelResult;

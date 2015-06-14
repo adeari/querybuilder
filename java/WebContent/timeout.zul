@@ -1,5 +1,5 @@
 <window width="80%" title="Session Timeout" border="normal">
 	<vbox>
-Sudah lama tidak di akses Click <a href="/queryWindow.zul">here</a> to refresh.
+Sudah lama tidak di akses Click <a href="/index.zul">here</a> to refresh.
 	</vbox>
 </window>

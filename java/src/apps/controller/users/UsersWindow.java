@@ -6,6 +6,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
+import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -37,8 +38,9 @@ public class UsersWindow extends Window {
 
 	ServiceMain serviceMain;
 
-	private Window singleWindow;
+	private Users userLogin;
 
+	private Window singleWindow;
 	private Button addButton;
 	private Grid grid;
 	private ListModelList<Users> usersListModelList;
@@ -47,6 +49,9 @@ public class UsersWindow extends Window {
 		super(title, null, true);
 		singleWindow = this;
 		serviceMain = new ServiceImplMain();
+
+		org.zkoss.zk.ui.Session session = Sessions.getCurrent();
+		userLogin = (Users) session.getAttribute("userlogin");
 
 		Borderlayout borderlayout = new Borderlayout();
 		borderlayout
@@ -139,6 +144,7 @@ public class UsersWindow extends Window {
 		refreshGrid();
 
 		grid.setRowRenderer(new MyRowRenderer());
+		
 		grid.setAutopaging(true);
 		grid.setMold("paging");
 		grid.setHeight("520px");
@@ -152,6 +158,7 @@ public class UsersWindow extends Window {
 		@Override
 		public void render(Row row, Object data, int index) throws Exception {
 			Users user = (Users) data;
+			System.out.println(user.getId() +" redddd   "+user.isIsdeleted());
 			final int indexEvent = index;
 
 			Label divisiLabel = new Label(user.getDivisi());
@@ -170,11 +177,8 @@ public class UsersWindow extends Window {
 										.getParent();
 								Label divisiEventLabel = (Label) editRow
 										.getChildren().get(3);
-								int indexEventNow = indexEvent;
-								if (usersListModelList.getSize() == indexEvent) {
-									indexEventNow--;
-								}
-								Users userEvent = (Users) usersListModelList.get(indexEventNow);
+								Users userEvent = (Users) usersListModelList
+										.get(indexEvent);
 
 								UsersFormWindow usersFormWindow = new UsersFormWindow(
 										"Edit user", userEvent);
@@ -196,48 +200,51 @@ public class UsersWindow extends Window {
 
 			Button deleteButton = new Button("");
 			deleteButton.setImage("image/delete-icon.png");
-			deleteButton.addEventListener(Events.ON_CLICK,
-					new EventListener<Event>() {
-						public void onEvent(Event event) {
-							Button deleteEventButton = (Button) event
-									.getTarget();
-							if (!deleteEventButton.isDisabled()) {
-								deleteEventButton.setDisabled(true);
+			if (user.getId() != 1
+					&& user.isIsdeleted() && !userLogin.getId().equals(user.getId())) {
+				deleteButton.addEventListener(Events.ON_CLICK,
+						new EventListener<Event>() {
+							public void onEvent(Event event) {
+								Button deleteEventButton = (Button) event
+										.getTarget();
+								if (!deleteEventButton.isDisabled()) {
+									deleteEventButton.setDisabled(true);
 
-								if (Messagebox.show("Delete this data?",
-										"Question", Messagebox.YES
-												| Messagebox.NO,
-										Messagebox.QUESTION) == Messagebox.YES) {
+									if (Messagebox.show("Delete this data?",
+											"Question", Messagebox.YES
+													| Messagebox.NO,
+											Messagebox.QUESTION) == Messagebox.YES) {
 
-									Row editRow = (Row) event.getTarget()
-											.getParent();
-									int indexEventNow = indexEvent;
-									if (usersListModelList.getSize() == indexEvent) {
-										indexEventNow--;
+										Row editRow = (Row) event.getTarget()
+												.getParent();
+										Users userEvent = (Users) usersListModelList
+												.get(indexEvent);
+
+										Session session = hibernateUtil
+												.getSessionFactory()
+												.openSession();
+										Transaction trx = session
+												.beginTransaction();
+										Criteria criteria = session
+												.createCriteria(Users.class);
+										criteria.add(Restrictions.eq("id",
+												userEvent.getId()));
+										Users tbUsers = (Users) criteria
+												.uniqueResult();
+										session.delete(tbUsers);
+										trx.commit();
+										session.close();
+
+										refreshGrid();
 									}
-									Users userEvent = (Users) usersListModelList.get(indexEventNow);
 
-									Session session = hibernateUtil
-											.getSessionFactory().openSession();
-									Transaction trx = session
-											.beginTransaction();
-									Criteria criteria = session
-											.createCriteria(Users.class);
-									criteria.add(Restrictions.eq("id",
-											userEvent.getId()));
-									Users tbUsers = (Users) criteria
-											.uniqueResult();
-									session.delete(tbUsers);
-									trx.commit();
-									session.close();
-
-									usersListModelList.remove(indexEventNow);
+									deleteEventButton.setDisabled(false);
 								}
-
-								deleteEventButton.setDisabled(false);
 							}
-						}
-					});
+						});
+			} else {
+				deleteButton.setDisabled(true);
+			}
 			row.appendChild(deleteButton);
 
 			row.appendChild(new Label(user.getUsername()));
@@ -249,10 +256,11 @@ public class UsersWindow extends Window {
 
 	public void refreshGrid() {
 		Session sessionSelect = hibernateUtil.getSessionFactory().openSession();
-		Criteria criteria = sessionSelect.createCriteria(Users.class);
-		List<Users> users = criteria.list();
+		Criteria criteria =  sessionSelect.createCriteria(Users.class);
+		List<Users> users = criteria.list();				
 		usersListModelList = new ListModelList<Users>(users);
 		grid.setModel(usersListModelList);
 		sessionSelect.close();
+		sessionSelect = null;
 	}
 }

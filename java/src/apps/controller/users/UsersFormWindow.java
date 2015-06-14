@@ -222,7 +222,7 @@ public class UsersFormWindow extends Window {
 													.getElementAt(
 															divisiSelectbox
 																	.getSelectedIndex())
-													.toString());
+													.toString(), true);
 
 									session.save(tbUsers);
 									trx.commit();

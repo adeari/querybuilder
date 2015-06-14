@@ -12,6 +12,7 @@ public class IndexWindow  extends GenericForwardComposer<Window> {
 	
 	@Override
 	public void doAfterCompose(Window window) throws Exception {
+		super.doAfterCompose(window);
 		windowMain = window;
 		
 		Session session = Sessions.getCurrent();
