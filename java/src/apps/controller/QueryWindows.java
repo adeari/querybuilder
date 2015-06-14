@@ -1,24 +1,24 @@
 package apps.controller;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 
 import org.apache.log4j.Logger;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
-import org.zkoss.zk.ui.util.GenericForwardComposer;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Button;
+import org.zkoss.zul.Cell;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
 import org.zkoss.zul.Messagebox;
+import org.zkoss.zul.North;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
 import org.zkoss.zul.Textbox;
@@ -28,35 +28,69 @@ import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.West;
 import org.zkoss.zul.Window;
 
-import apps.service.serviceMain;
+import apps.service.ServiceImplMain;
+import apps.service.ServiceMain;
 
-public class mainWindows extends GenericForwardComposer<Window> {
+public class QueryWindows extends Window {
 	private static final long serialVersionUID = -2091055007101580190L;
-	private static final Logger logger = Logger.getLogger(mainWindows.class);
+	private static final Logger logger = Logger.getLogger(QueryWindows.class);
+	
+	ServiceMain serviceMain;
 	
 	private String _driverName; 
 	private String _url; 
-	/*private String _host; 
-	private String _port; 
-	private String _databaseName; 
-	private String _userName; 
-	private String _password;*/
 	
 	//Component
-	private Window windowMain;
+	private Textbox textQuery;
+	private Row rowResult;
+	private Label labelResult;
+	private Window queryWindow;
 	// End Component
 	
-	@Override
-	public void doAfterCompose(Window window) throws Exception {
-		super.doAfterCompose(window);
-				
+	public QueryWindows(String title) {
+		super(title, null, true);
+		queryWindow = this;
+		serviceMain = new ServiceImplMain();
 		Borderlayout borderlayout = new Borderlayout();
-		borderlayout.setStyle("position:absolute; top:0; bottom:0; right:0; left:0;");
-		borderlayout.setWidth("100%");
+		borderlayout.setStyle("position:absolute; top:0; bottom:0; right:0; left:0;border-style:none");
+		
+		North north = new North();
+		north.setHeight("46px");
+		north.setParent(borderlayout);
+		Grid nortGrid = new Grid();
+		Rows northRows = new Rows();
+		
+		Row northRow = new Row();
+		
+		Cell titleCell = new Cell();
+		Label titleLabel = new Label(title);
+		titleLabel.setStyle("font-weight: bold; font-size: 16px");
+		titleLabel.setParent(titleCell);
+		titleCell.setWidth("97%");
+		titleCell.setParent(northRow);
+		titleCell.setStyle("background: yellow");
+		
+		Cell closeCell = new Cell();
+		closeCell.setStyle("background: yellow");
+		Button closeButton = new Button("X");
+		closeButton.setStyle("background: red; font-color: blue;");
+		closeButton.addEventListener(Events.ON_CLICK,  new EventListener<Event>() {
+		    public void onEvent(Event event) {
+		    	queryWindow.detach();
+		    }
+		});
+		closeButton.setParent(closeCell);
+		closeCell.setParent(northRow);
+		
+		northRow.setParent(northRows);
+		northRows.setParent(nortGrid);
+		nortGrid.setParent(north);
+		
 		
 		Center center = new Center();
 		center.setParent(borderlayout);
 		center.setAutoscroll(true);
+		
 		
 		Grid grid = new Grid();
 		Rows rows = new Rows();
@@ -66,7 +100,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 		rowQuery.setParent(rows);
 		
 		Row rowTextQuery = new Row();
-		final Textbox textQuery = new Textbox();
+		textQuery = new Textbox();
 		textQuery.setWidth("100%");
 		textQuery.setRows(6);
 		textQuery.setParent(rowTextQuery);
@@ -78,9 +112,9 @@ public class mainWindows extends GenericForwardComposer<Window> {
 		buttonRun.setParent(rowButtonRun);
 		rowButtonRun.setParent(rows);
 		
-		final Row rowResult = new Row();
+		rowResult = new Row();
 		
-		final Label labelResult = new Label("....");
+		labelResult = new Label("....");
 		rowResult.appendChild(labelResult);
 				
 		rowResult.setParent(rows);
@@ -100,12 +134,17 @@ public class mainWindows extends GenericForwardComposer<Window> {
 		Tree treeData = new Tree();
 		treeData.setWidth("100%");
 		Treechildren treechildrenTreeDAta = new Treechildren();
+		
+		
 		addTreeData("sqlserver", "NAME", treechildrenTreeDAta, textQuery);
 		addTreeData("mysql", "table_name", treechildrenTreeDAta, textQuery);
+		
+		
+		
 		treechildrenTreeDAta.setParent(treeData);
 		treeData.setParent(weast);
 										
-		borderlayout.setParent(windowMain);
+		borderlayout.setParent(queryWindow);
 		
 		buttonRun.addEventListener("onClick", new EventListener<Event>() {
 		    public void onEvent(Event event) {
@@ -124,7 +163,6 @@ public class mainWindows extends GenericForwardComposer<Window> {
 	
 	private void addTreeData(final String databaseKind, String getTableName,
 			Treechildren treechildrenTreeDAta, final Textbox textQuery) {
-		
 		boolean hasConnectionSQLServer = true;
 		int indexDataSqlServer = 0;
 		while (hasConnectionSQLServer) {
@@ -136,6 +174,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 				String databaseName = serviceMain.getPropSetting(databaseKind+".name"
 						+ indexDataSqlServer);
 				final Treeitem treeitemDatabase = new Treeitem(databaseName + "  ("+databaseKind+")");
+				treeitemDatabase.setImage("image/database-icon.png");
 				
 				try {
 					Connection connection = serviceMain.getConnection(serviceMain.getPropSetting(databaseKind+".driver"
@@ -207,6 +246,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 				    			
 				    			Menupopup menupopupItemColumn = new Menupopup();
 				    			Menuitem menuitemAddCondition = new Menuitem("Add condition");
+				    			menuitemAddCondition.setImage("image/columnicon.png");
 				    			menuitemAddCondition.addEventListener("onClick", new EventListener<Event>() {
 								    public void onEvent(Event event) {
 								    	textQuery.setValue(textQuery.getValue()+conditionAdded);
@@ -214,33 +254,40 @@ public class mainWindows extends GenericForwardComposer<Window> {
 								});
 				    			menuitemAddCondition.setParent(menupopupItemColumn);
 				    			Menuitem menuitemAndCondition = new Menuitem("AND condition");
+				    			menuitemAndCondition.setImage("image/columnicon.png");
 				    			menuitemAndCondition.addEventListener("onClick", new EventListener<Event>() {
 				    				public void onEvent(Event event) {
 				    					String conditionAddedAnd = " AND "+condition;
 								    	if (textQuery.getValue().length() > 0) {
-								    		conditionAddedAnd = "\n"+condition;
+								    		conditionAddedAnd = "\n"+conditionAddedAnd;
 								    	}
 								    	textQuery.setValue(textQuery.getValue()+conditionAddedAnd);
 				    				}
 				    			});
 				    			menuitemAndCondition.setParent(menupopupItemColumn);
 				    			Menuitem menuitemORCondition = new Menuitem("OR condition");
+				    			menuitemORCondition.setImage("image/columnicon.png");
 				    			menuitemORCondition.addEventListener("onClick", new EventListener<Event>() {
 				    				public void onEvent(Event event) {
 				    					String conditionAddedOr = " OR "+condition;
 								    	if (textQuery.getValue().length() > 0) {
-								    		conditionAddedOr = "\n"+condition;
+								    		conditionAddedOr = "\n"+conditionAddedOr;
 								    	}
 								    	textQuery.setValue(textQuery.getValue()+conditionAddedOr);
 				    				}
 				    			});
 				    			menuitemORCondition.setParent(menupopupItemColumn);
 					    		
-				    			menupopupItemColumn.setParent(windowMain);
+				    			menupopupItemColumn.setParent(queryWindow);
 				    			treeitemColumn.setContext(menupopupItemColumn);
 				    			treeitemColumn.setParent(treechildrenColumn);
 				    		}
 				    		final String querySelectFinal = "SELECT "+querySelect+" FROM "+tableName;
+				    		String querySelect300 = "SELECT TOP(300) "+querySelect+" FROM "+tableName;
+				    		if (databaseKind.equalsIgnoreCase("mysql")) {
+				    			querySelect300 = "SELECT "+querySelect+" FROM "+tableName+" LIMIT 300";
+							}
+				    		final String querySelect300Final = querySelect300;
 				    		
 				    		queryInsertValues += ") ";
 				    		final String queryInsertFinal = "INSERT INTO "+tableName+" ("+querySelect+") VALUES "+queryInsertValues;
@@ -260,6 +307,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 				    		
 				    		Menupopup menupopupItemTable = new Menupopup();
 				    		Menuitem menuitemPopupItemTableSelect = new Menuitem("Select");
+				    		menuitemPopupItemTableSelect.setImage("image/queryIcon.png");
 				    		menuitemPopupItemTableSelect.addEventListener("onClick", new EventListener<Event>() {
 							    public void onEvent(Event event) {
 							    	setSelectResult(textQuery, 
@@ -271,7 +319,21 @@ public class mainWindows extends GenericForwardComposer<Window> {
 							    }
 							});
 				    		menuitemPopupItemTableSelect.setParent(menupopupItemTable);
+				    		Menuitem select300ItemTableMenuitem = new Menuitem("Select 300");
+				    		select300ItemTableMenuitem.setImage("image/queryIcon.png");
+				    		select300ItemTableMenuitem.addEventListener("onClick", new EventListener<Event>() {
+				    			public void onEvent(Event event) {
+				    				setSelectResult(textQuery, 
+				    						querySelect300Final,
+				    						serviceMain.getPropSetting(databaseKind+".driver"
+				    								+ indexDataSqlServerFinal), 
+				    								serviceMain.getPropSetting(databaseKind+".url"
+				    										+ indexDataSqlServerFinal));
+				    			}
+				    		});
+				    		select300ItemTableMenuitem.setParent(menupopupItemTable);
 				    		Menuitem menuitemPopupItemTableInsert = new Menuitem("Insert");
+				    		menuitemPopupItemTableInsert.setImage("image/rss.png");
 				    		menuitemPopupItemTableInsert.addEventListener("onClick", new EventListener<Event>() {
 							    public void onEvent(Event event) {
 							    	setSelectResult(textQuery, 
@@ -284,6 +346,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 							});
 				    		menuitemPopupItemTableInsert.setParent(menupopupItemTable);
 				    		Menuitem menuitemPopupItemTableUpdate = new Menuitem("Update");
+				    		menuitemPopupItemTableUpdate.setImage("image/rss.png");
 				    		menuitemPopupItemTableUpdate.addEventListener("onClick", new EventListener<Event>() {
 							    public void onEvent(Event event) {
 							    	setSelectResult(textQuery, 
@@ -297,6 +360,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 				    		menuitemPopupItemTableUpdate.setParent(menupopupItemTable);
 				    		
 				    		Menuitem menuitemPopupItemTableDelete = new Menuitem("Delete");
+				    		menuitemPopupItemTableDelete.setImage("image/rss.png");
 				    		menuitemPopupItemTableDelete.addEventListener("onClick", new EventListener<Event>() {
 							    public void onEvent(Event event) {
 							    	setSelectResult(textQuery, 
@@ -308,7 +372,7 @@ public class mainWindows extends GenericForwardComposer<Window> {
 							    }
 							});
 				    		menuitemPopupItemTableDelete.setParent(menupopupItemTable);
-				    		menupopupItemTable.setParent(windowMain);
+				    		menupopupItemTable.setParent(queryWindow);
 				    		
 				    		treeitemTable.setContext(menupopupItemTable);
 				    		
