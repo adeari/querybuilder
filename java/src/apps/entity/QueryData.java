@@ -46,6 +46,9 @@ public class QueryData implements Serializable  {
 	@Column(name = "modified_at")
 	private Timestamp modifiedAt;
 	
+	@Column(name = "isdeleted")
+	private boolean isDeleted;
+	
 
 	@Column(name = "named", unique = true, nullable = false, length = 200)
 	private String named;
@@ -137,6 +140,14 @@ public class QueryData implements Serializable  {
 
 	public void setNamed(String named) {
 		this.named = named;
+	}
+
+	public boolean isDeleted() {
+		return isDeleted;
+	}
+
+	public void setDeleted(boolean isDeleted) {
+		this.isDeleted = isDeleted;
 	}
 	
 	

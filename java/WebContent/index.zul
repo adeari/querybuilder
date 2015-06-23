@@ -1,3 +1,3 @@
 <?style href="css/main.css.dsp" type="text/css" ?>
-<?page title="Main menu"?>
+<?page title="Query builder"?>
 <window apply="apps.controller.IndexWindow"/>

@@ -18,7 +18,7 @@ import org.zkoss.zul.Window;
 import apps.entity.Users;
 import apps.service.ServiceImplMain;
 
-public class LoginWindow extends Window {
+public class LoginWindow extends Vlayout {
 	private static final long serialVersionUID = -6233909855353185900L;
 
 	private ServiceImplMain serviceMain;
@@ -28,26 +28,30 @@ public class LoginWindow extends Window {
 	private Textbox passwordTextbox;
 	private Button loginButton;
 
-	private Window loginWindow;
 	private Window mainWindow;
 
 	public LoginWindow(Window windowMain) {
-		super(null, null, false);
-		loginWindow = this;
 		mainWindow = windowMain;
 
 		serviceMain = new ServiceImplMain();
-		Vlayout vlayout = new Vlayout();
+		Vlayout vlayout = this;
 		vlayout.setWidth("350px");
-		vlayout.setStyle("margin:0 auto; border: 0; margin-top:100px;text-align: center; background: white; padding: 20px;");
+		vlayout.setStyle("margin:0 auto; text-align: center;");
+		
+		Vlayout vlayout2 = new Vlayout();
+		vlayout2.setParent(vlayout);
+		vlayout2.setWidth("350px");
+		vlayout2.setClass("clear");
+		vlayout2.setStyle("border-radius: 10px; text-align: center; padding: 20px; margin-top: 200px; background: #FFF;");
+		
 		Label titleLabel = new Label("L O G I N");
 		titleLabel.setStyle("font-weight: bold; font-size: 27px;");
-		vlayout.appendChild(titleLabel);
+		titleLabel.setParent(vlayout2);
 
 		commentLabel = new Label();
 		commentLabel.setStyle("color: red;");
 		commentLabel.setVisible(false);
-		vlayout.appendChild(commentLabel);
+		commentLabel.setParent(vlayout2);
 
 		Grid grid = new Grid();
 		grid.setStyle("border: 0;");
@@ -69,7 +73,7 @@ public class LoginWindow extends Window {
 					}
 				});
 		userRow.appendChild(usernameTextbox);
-		userRow.setStyle("border: 0; background: transparent; ");
+		userRow.setStyle("border: 0;");
 		rows.appendChild(userRow);
 
 		Row passwordRow = new Row();
@@ -93,11 +97,11 @@ public class LoginWindow extends Window {
 				});
 
 		passwordRow.appendChild(passwordTextbox);
-		passwordRow.setStyle("border: 0; background: transparent;");
+		passwordRow.setStyle("border: 0;");
 		rows.appendChild(passwordRow);
 
 		grid.appendChild(rows);
-		vlayout.appendChild(grid);
+		grid.setParent(vlayout2);
 
 		loginButton = new Button("Login");
 		loginButton.setStyle("backgound: green;");
@@ -112,9 +116,7 @@ public class LoginWindow extends Window {
 						}
 					}
 				});
-		vlayout.appendChild(loginButton);
-
-		loginWindow.appendChild(vlayout);
+		loginButton.setParent(vlayout2);
 
 	}
 

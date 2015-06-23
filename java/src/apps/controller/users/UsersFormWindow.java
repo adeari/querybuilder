@@ -1,5 +1,6 @@
 package apps.controller.users;
 
+import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -10,13 +11,13 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Cell;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.ItemRenderer;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Row;
-import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.Rows;
 import org.zkoss.zul.Selectbox;
 import org.zkoss.zul.Textbox;
@@ -29,9 +30,12 @@ import apps.service.hibernateUtil;
 
 public class UsersFormWindow extends Window {
 	private static final long serialVersionUID = -7546871546233729815L;
+	private static final Logger logger = Logger
+			.getLogger(UsersFormWindow.class);
 
 	private Users _user;
-	private ListModelList<String> optionsListModelList;
+	private ListModelList<String> _optionsListModelList;
+	private String _eventName;
 
 	private Button saveButton;
 	private Textbox usernameTextbox;
@@ -39,46 +43,53 @@ public class UsersFormWindow extends Window {
 	private Textbox password2Textbox;
 	private Textbox passwordTextbox;
 	private Label commentLabel;
+	private Div div;
 
 	private ServiceMain servviceMain;
 
 	public UsersFormWindow(String title, Users user) {
 		super(title, null, true);
+		_eventName = "";
 
 		servviceMain = new ServiceImplMain();
+		
+		div = new Div();
+		div.setParent(this);
+		div.setVisible(false);
+		div.setStyle("width: 100%; text-align: center;height: 30px;");
+		commentLabel = new Label();
+		commentLabel.setParent(div);
+		commentLabel.setStyle("color: red;");
+		
 		Grid grid = new Grid();
 
 		Rows rows = new Rows();
 
+		
 		Row row = new Row();
-		Cell cell = new Cell();
-		cell.setColspan(2);
-		cell.setAlign("center");
-		commentLabel = new Label();
-		commentLabel.setStyle("color: red");
-		commentLabel.setVisible(false);
-		cell.appendChild(commentLabel);
-		row.appendChild(cell);
-		rows.appendChild(row);
-
-		row = new Row();
+		row.setParent(rows);
+		Cell labelCell = new Cell();
+		labelCell.setStyle("width: 130px");
+		labelCell.setParent(row);
 		Label usernameLabel = new Label("User name");
-		usernameLabel.setWidth("130px");
-		row.appendChild(usernameLabel);
+		usernameLabel.setParent(labelCell);
+		Cell insertCell = new Cell();
+		insertCell.setParent(row);
 		usernameTextbox = new Textbox();
-		row.appendChild(usernameTextbox);
-		rows.appendChild(row);
+		usernameTextbox.setParent(insertCell);
 
+		
+		
 		row = new Row();
 		Label divisiLabel = new Label("Divisi");
-		divisiLabel.setWidth("130px");
+		divisiLabel.setWidth("90px");
 		row.appendChild(divisiLabel);
 		String[] options = new String[] { "Operator", "Admin" };
-		optionsListModelList = new ListModelList<String>(options);
+		_optionsListModelList = new ListModelList<String>(options);
 		if (user == null) {
-			optionsListModelList.addToSelection(options[0]);
+			_optionsListModelList.addToSelection(options[0]);
 		}
-		ListModel<String> optionListModel = optionsListModelList;
+		ListModel<String> optionListModel = _optionsListModelList;
 		divisiSelectbox = new Selectbox();
 		divisiSelectbox.setModel(optionListModel);
 		divisiSelectbox.setItemRenderer(new OptionsRenderer());
@@ -91,7 +102,7 @@ public class UsersFormWindow extends Window {
 
 		row = new Row();
 		Label passwordLabel = new Label("Password");
-		passwordLabel.setWidth("130px");
+		passwordLabel.setWidth("90px");
 		row.appendChild(passwordLabel);
 		passwordTextbox = new Textbox();
 		passwordTextbox.setType("password");
@@ -100,7 +111,7 @@ public class UsersFormWindow extends Window {
 
 		row = new Row();
 		Label password2Label = new Label("Re Password");
-		password2Label.setWidth("130px");
+		password2Label.setWidth("90px");
 		row.appendChild(password2Label);
 		password2Textbox = new Textbox();
 		password2Textbox.setType("password");
@@ -116,17 +127,18 @@ public class UsersFormWindow extends Window {
 
 				if (_user.getDivisi().equalsIgnoreCase(
 						divisiSelectbox.getModel().getElementAt(i).toString())) {
-					optionsListModelList.addToSelection(options[i]);
+					_optionsListModelList.addToSelection(options[i]);
 					break;
 				}
 			}
 		}
-
+		
 		row = new Row();
-		cell = new Cell();
+		Cell cell = new Cell();
 		cell.setColspan(2);
 		cell.setAlign("center");
 		saveButton = new Button("Save");
+		saveButton.setImage("image/save.png");
 		saveButton.setStyle("margin: 0 20px 0 0;backgound: green;");
 		saveButton.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
@@ -137,31 +149,46 @@ public class UsersFormWindow extends Window {
 							boolean canSAve = true;
 							if (canSAve && usernameTextbox.getValue().isEmpty()) {
 								commentLabel.setValue("Enter user name");
-								commentLabel.setVisible(true);
+								div.setVisible(true);
 								usernameTextbox.setFocus(true);
 								canSAve = false;
 							}
 
 							if (canSAve
 									&& !usernameTextbox.getValue().isEmpty()) {
-								Session sessionSelect = hibernateUtil
-										.getSessionFactory().openSession();
-								Criteria criteria = sessionSelect
-										.createCriteria(Users.class);
-								criteria.add(Restrictions.eq("username",
-										usernameTextbox.getValue()));
-								if (_user != null) {
-									criteria.add(Restrictions.ne("id",
-											_user.getId()));
+
+								Session sessionSelect = null;
+								try {
+									sessionSelect = hibernateUtil
+											.getSessionFactory().openSession();
+									Criteria criteria = sessionSelect
+											.createCriteria(Users.class);
+									criteria.add(Restrictions.eq("username",
+											usernameTextbox.getValue()));
+									if (_user != null) {
+										criteria.add(Restrictions.ne("id",
+												_user.getId()));
+									}
+									if (criteria.list().size() > 0) {
+										commentLabel
+												.setValue("This username already exist");
+										div.setVisible(true);
+										usernameTextbox.setFocus(true);
+										canSAve = false;
+									}
+								} catch (Exception e) {
+									logger.error(e.getMessage(), e);
+
+								} finally {
+									if (sessionSelect != null) {
+										try {
+											sessionSelect.close();
+										} catch (Exception e) {
+											logger.error(e.getMessage(), e);
+										}
+									}
+
 								}
-								if (criteria.list().size() > 0) {
-									commentLabel
-											.setValue("This username already exist");
-									commentLabel.setVisible(true);
-									usernameTextbox.setFocus(true);
-									canSAve = false;
-								}
-								sessionSelect.close();
 
 							}
 
@@ -169,7 +196,7 @@ public class UsersFormWindow extends Window {
 								if (canSAve
 										&& passwordTextbox.getValue().isEmpty()) {
 									commentLabel.setValue("Enter password");
-									commentLabel.setVisible(true);
+									div.setVisible(true);
 									passwordTextbox.setFocus(true);
 									canSAve = false;
 								}
@@ -178,7 +205,7 @@ public class UsersFormWindow extends Window {
 										&& password2Textbox.getValue()
 												.isEmpty()) {
 									commentLabel.setValue("Enter re password");
-									commentLabel.setVisible(true);
+									div.setVisible(true);
 									password2Textbox.setFocus(true);
 									canSAve = false;
 								}
@@ -191,7 +218,7 @@ public class UsersFormWindow extends Window {
 										&& passwordTextbox.getValue().length() < 6) {
 									commentLabel
 											.setValue("Enter more then 5 characters");
-									commentLabel.setVisible(true);
+									div.setVisible(true);
 									passwordTextbox.setFocus(true);
 									canSAve = false;
 								}
@@ -200,7 +227,7 @@ public class UsersFormWindow extends Window {
 										&& !password2Textbox.getValue().equals(
 												passwordTextbox.getValue())) {
 									commentLabel.setValue("password not same");
-									commentLabel.setVisible(true);
+									div.setVisible(true);
 									password2Textbox.setFocus(true);
 									canSAve = false;
 								}
@@ -226,7 +253,7 @@ public class UsersFormWindow extends Window {
 
 									session.save(tbUsers);
 									trx.commit();
-
+									_eventName = "Add";
 								} else {
 									Criteria criteria = session
 											.createCriteria(Users.class);
@@ -250,6 +277,7 @@ public class UsersFormWindow extends Window {
 									_user.setDivisi(tbUsers.getDivisi());
 									session.update(tbUsers);
 									trx.commit();
+									_eventName = "Edit";
 								}
 								session.close();
 								detach();
@@ -262,6 +290,7 @@ public class UsersFormWindow extends Window {
 				});
 		cell.appendChild(saveButton);
 		Button cancelButton = new Button("Cancel");
+		cancelButton.setImage("image/cancel.png");
 		cancelButton.setStyle("backgound: yellow");
 		cancelButton.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
@@ -290,4 +319,9 @@ public class UsersFormWindow extends Window {
 	public Users get_user() {
 		return _user;
 	}
+
+	public String getEventName() {
+		return _eventName;
+	}
+
 }

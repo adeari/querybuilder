@@ -1,0 +1,3 @@
+<?style href="css/main.css.dsp" type="text/css" ?>
+<?page title="Login"?>
+<window apply="apps.controller.LoginCenterWindow"/>

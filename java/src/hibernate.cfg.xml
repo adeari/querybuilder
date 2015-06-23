@@ -12,6 +12,7 @@
     
     <mapping class="apps.entity.Users"/>
     <mapping class="apps.entity.QueryData"/>
+    <mapping class="apps.entity.UsersQuery"/>
     
   </session-factory>
 </hibernate-configuration>

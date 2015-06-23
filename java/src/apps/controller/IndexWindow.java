@@ -14,6 +14,10 @@ public class IndexWindow  extends GenericForwardComposer<Window> {
 	public void doAfterCompose(Window window) throws Exception {
 		super.doAfterCompose(window);
 		windowMain = window;
+		windowMain.setMaximizable(true);
+		windowMain.setBorder(false);
+		windowMain.setMaximized(true);
+		windowMain.setContentSclass("imagebody");
 		
 		Session session = Sessions.getCurrent();
 		

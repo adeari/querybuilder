@@ -1,12 +1,10 @@
 package apps.service;
 
 import java.sql.Connection;
+import java.sql.Timestamp;
 import java.util.Date;
 
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zul.Textbox;
-import org.zkoss.zul.Treechildren;
-import org.zkoss.zul.Window;
 
 import apps.entity.Users;
 
@@ -20,9 +18,8 @@ public interface ServiceMain {
 			String driverName, 
 			String url);
 	public String getValueColumn(String columnName, String columnType, int columnLength);
-	public void setTreeData(final String databaseKind, String getTableName, final Textbox textQuery,
-			Window windowMain, final String _driverName, final String _url, Treechildren treechildrenTreeDAta);
 	public String convertStringFromDate(String format, Date date);
 	public String convertPass(String pass);
+	public Timestamp convertToTimeStamp(String format, String date);
 	public Users get1UserByUsernameAndPassword(String username, String pass);
 }

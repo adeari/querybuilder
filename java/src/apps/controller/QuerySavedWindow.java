@@ -2,6 +2,7 @@ package apps.controller;
 
 import java.util.Date;
 
+import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
@@ -20,10 +21,14 @@ import org.zkoss.zul.Window;
 
 import apps.entity.QueryData;
 import apps.entity.Users;
+import apps.service.CheckService;
 import apps.service.hibernateUtil;
 
 public class QuerySavedWindow extends Window {
 	private static final long serialVersionUID = 3619446823275550491L;
+	private static final Logger logger = Logger
+			.getLogger(QuerySavedWindow.class);
+	private CheckService checkService;
 
 	private String _driverName;
 	private String _url;
@@ -36,11 +41,11 @@ public class QuerySavedWindow extends Window {
 	public QuerySavedWindow(String title, String driverName, String url,
 			String sql) {
 		super(title, null, true);
+		checkService = new CheckService();
 		_driverName = driverName;
 		_url = url;
 		_sql = sql;
 		queryWindow = this;
-		queryWindow.setStyle("background: white");
 		Grid grid = new Grid();
 		grid.setStyle("border: 0");
 		Rows rows = new Rows();
@@ -69,6 +74,7 @@ public class QuerySavedWindow extends Window {
 		buttonCell.setStyle("text-align: center;");
 		buttonCell.setColspan(2);
 		saveButton = new Button("Save");
+		saveButton.setImage("image/save.png");
 		saveButton.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
 					public void onEvent(Event event) {
@@ -85,7 +91,9 @@ public class QuerySavedWindow extends Window {
 							}
 
 							if (canSave) {
-								org.hibernate.Session session = hibernateUtil
+								org.hibernate.Session session = null;
+								try {
+								session = hibernateUtil
 										.getSessionFactory().openSession();
 
 								if (canSave) {
@@ -119,11 +127,26 @@ public class QuerySavedWindow extends Window {
 											user, new Date(), new Date());
 
 									session.save(queryData);
+									
+									user.setIsdeleted(false);
+									session.update(user);
 
 									trx.commit();
-									session.close();
-									detach();
 								}
+								} catch (Exception e) {
+									logger.error(e.getMessage(), e);
+									
+								} finally {
+									if (session != null) {
+										try {
+											session.close();
+										} catch (Exception e) {
+											logger.error(e.getMessage(), e);
+										} 
+									}
+									
+								}
+								detach();
 							}
 
 							saveButton.setDisabled(false);
@@ -132,6 +155,7 @@ public class QuerySavedWindow extends Window {
 				});
 		buttonCell.appendChild(saveButton);
 		Button cancelButton = new Button("Cancel");
+		cancelButton.setImage("image/cancel.png");
 		cancelButton.setStyle("margin: 0 0 0 20px");
 		cancelButton.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {

@@ -9,13 +9,13 @@
 	</library-property>
 	<library-property>
 		<name>org.zkoss.theme.preferred</name>
-		<value>atlantic</value> <!-- breeze, sapphire, silvertail, atlantic -->
+		<value>flatly</value>
 	</library-property>
 	<system-config>
 		<disable-event-thread>false</disable-event-thread>
 	</system-config>
 	<device-config>
 		<device-type>ajax</device-type>
-		<timeout-uri>/timeout.zul</timeout-uri>
+		<timeout-uri>/index.zul</timeout-uri>
 	</device-config>
 </zk>
