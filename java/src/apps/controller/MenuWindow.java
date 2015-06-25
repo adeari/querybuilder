@@ -1,21 +1,27 @@
 package apps.controller;
 
+import org.zkoss.lang.Library;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Label;
+import org.zkoss.zul.ListModel;
+import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Menu;
 import org.zkoss.zul.Menubar;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
+import org.zkoss.zul.Selectbox;
 import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
 import apps.controller.queryy.QueryListWindow;
 import apps.controller.users.UsersWindow;
 import apps.entity.Users;
+import apps.query.control.QueryOperation;
 
 public class MenuWindow extends Window {
 	private static final long serialVersionUID = -2091055007101580190L;
@@ -24,6 +30,7 @@ public class MenuWindow extends Window {
 	private Menuitem usersMenuitem;
 	private Menuitem changePasswordMenuitem;
 	private Menuitem queryManagementMenuitem;
+	private Menuitem queryOperationMenuitem;
 	private Menuitem logoutMenuitem;
 	private Window mainWindow;
 	private Label userloginLabel;
@@ -67,7 +74,7 @@ public class MenuWindow extends Window {
 		usersMenuitem = new Menuitem("Users");
 		usersMenuitem.setParent(mainMenupopup);
 		usersMenuitem.setVisible(false);
-		usersMenuitem.setImage("image/users.jpg");
+		usersMenuitem.setImage("image/user.png");
 		usersMenuitem.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
 					public void onEvent(Event event) {
@@ -90,7 +97,7 @@ public class MenuWindow extends Window {
 		queryManagementMenuitem = new Menuitem("Query management");
 		queryManagementMenuitem.setParent(mainMenupopup);
 		queryManagementMenuitem.setVisible(false);
-		queryManagementMenuitem.setImage("image/rss.png");
+		queryManagementMenuitem.setImage("image/sql1.png");
 		queryManagementMenuitem.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
 					public void onEvent(Event event) {
@@ -133,44 +140,63 @@ public class MenuWindow extends Window {
 					}
 				});
 
+		queryOperationMenuitem = new Menuitem("Query opearation");
+		queryOperationMenuitem.setParent(mainMenupopup);
+		queryOperationMenuitem.setImage("image/sql.png");
+		queryOperationMenuitem.addEventListener(Events.ON_CLICK,
+				new EventListener<Event>() {
+					public void onEvent(Event event) {
+						if (!queryOperationMenuitem.isDisabled()) {
+							queryOperationMenuitem.setDisabled(true);
+							
+							QueryOperation queryOperation = new QueryOperation("Query operation");
+							queryOperation.setParent(menuWindow);
+							queryOperation.doModal();
+							
+							queryOperationMenuitem.setDisabled(false);
+						}
+					}
+				});
+		
 		logoutMenuitem = new Menuitem("Logout");
 		logoutMenuitem.setParent(mainMenupopup);
 		logoutMenuitem.setImage("image/logout.jpg");
 		logoutMenuitem.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
-					public void onEvent(Event event) {
-						if (!logoutMenuitem.isDisabled()) {
-							logoutMenuitem.setDisabled(true);
-
-							logout();
-
-							logoutMenuitem.setDisabled(false);
-						}
-					}
-				});
+			public void onEvent(Event event) {
+				if (!logoutMenuitem.isDisabled()) {
+					logoutMenuitem.setDisabled(true);
+					
+					logout();
+					
+					logoutMenuitem.setDisabled(false);
+				}
+			}
+		});
 
 		mainMenupopup.setParent(mainMenu);
 		mainMenu.setParent(mainMenubar);
 		mainMenubar.setStyle("position:absolute; right:0; left:0;");
+		
+		
 
 		vlayout.appendChild(mainMenubar);
 		userloginLabel = new Label();
 		userloginLabel
-				.setStyle("color: blue; font-weight: bold; font-size : 20px;float: right; margin: 0 20px 0 0;");
+				.setStyle("color: blue; font-weight: bold; font-size : 20px;float: right; margin: 0 25px 0 0;");
 		vlayout.appendChild(userloginLabel);
 		menuWindow.appendChild(vlayout);
+
 	}
-	
+
 	public void logout() {
 		Session session = Sessions.getCurrent();
 		session.removeAttribute("userlogin");
 
-		MenuWindow menuWindow = (MenuWindow) mainWindow
-				.getChildren().get(1);
+		MenuWindow menuWindow = (MenuWindow) mainWindow.getChildren().get(1);
 		menuWindow.setVisible(false);
 
-		LoginWindow loginWindow = (LoginWindow) mainWindow
-				.getChildren().get(0);
+		LoginWindow loginWindow = (LoginWindow) mainWindow.getChildren().get(0);
 		loginWindow.setVisible(true);
 
 		loginWindow.openLoginWindow();

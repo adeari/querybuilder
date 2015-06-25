@@ -81,12 +81,12 @@ public class QueryListWindow extends Window {
 		Cell iconCell = new Cell();
 		iconCell.setStyle("background: yellow;border: 0;width: 2%;");
 		northRow.appendChild(iconCell);
-		Image image = new Image("image/rss.png");
+		Image image = new Image("image/sql1.png");
 		iconCell.appendChild(image);
 
 		Cell titleCell = new Cell();
 		titleCell.setParent(northRow);
-		titleCell.setStyle("background: yellow;width: 95%;border: 0;");
+		titleCell.setStyle("background: yellow;width: 95%;border: 0; color: #000;");
 		Label titleLabel = new Label(title);
 		titleLabel.setStyle("font-weight: bold; font-size: 16px; ");
 		titleLabel.setParent(titleCell);
@@ -395,7 +395,7 @@ public class QueryListWindow extends Window {
 										session.delete(selectedData);
 										trx.commit();
 
-										checkService.userIsDeleted(userBefore);
+										checkService.userIsDeleted( userBefore);
 									} catch (Exception e) {
 										logger.error(e.getMessage(), e);
 

@@ -78,15 +78,15 @@ public class UsersWindow extends Window {
 
 		Row northRow = new Row();
 		Cell iconCell = new Cell();
-		iconCell.setStyle("background: yellow;border: 0;width: 4%;");
+		iconCell.setStyle("background: yellow;border: 0;width: 2%;");
 		northRow.appendChild(iconCell);
-		Image image = new Image("image/users.jpg");
+		Image image = new Image("image/user.png");
 		iconCell.appendChild(image);
 		
 
 		Cell titleCell = new Cell();
 		titleCell.setParent(northRow);
-		titleCell.setStyle("background: yellow;width: 93%;border: 0;");
+		titleCell.setStyle("background: yellow;width: 95%;border: 0; color: #000;");
 		Label titleLabel = new Label(title);
 		titleLabel.setStyle("font-weight: bold; font-size: 16px");
 		titleLabel.setParent(titleCell);
@@ -116,7 +116,7 @@ public class UsersWindow extends Window {
 		Vlayout vlayout = new Vlayout();
 		Div divlayout = new Div();
 		addButton = new Button("Add " + title);
-		addButton.setImage("image/usersadd.jpg");
+		addButton.setImage("image/user_add.png");
 		addButton.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 			public void onEvent(Event event) {
 				if (!addButton.isDisabled()) {
@@ -436,9 +436,14 @@ public class UsersWindow extends Window {
 			}
 			row.appendChild(deleteButton);
 			
+			
+			
 			ButtonCustom gearButtonCustom = new ButtonCustom("image/gear.png",
 					user);
 			gearButtonCustom.setParent(row);
+			if (user.getDivisi().equalsIgnoreCase("Admin")) {
+				gearButtonCustom.setDisabled(true);
+			}
 			gearButtonCustom.setWidth("40px");
 			gearButtonCustom.addEventListener(Events.ON_CLICK,
 					new EventListener<Event>() {

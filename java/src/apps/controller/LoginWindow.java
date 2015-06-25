@@ -1,5 +1,7 @@
 package apps.controller;
 
+import org.zkoss.lang.Library;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
@@ -9,8 +11,11 @@ import org.zkoss.zul.Button;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Label;
+import org.zkoss.zul.ListModel;
+import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
+import org.zkoss.zul.Selectbox;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
@@ -37,16 +42,16 @@ public class LoginWindow extends Vlayout {
 		Vlayout vlayout = this;
 		vlayout.setWidth("350px");
 		vlayout.setStyle("margin:0 auto; text-align: center;");
-		
+
 		Vlayout vlayout2 = new Vlayout();
 		vlayout2.setParent(vlayout);
 		vlayout2.setWidth("350px");
 		vlayout2.setClass("clear");
-		vlayout2.setStyle("border-radius: 10px; text-align: center; padding: 20px; margin-top: 200px; background: #FFF;");
 		
+
 		Label titleLabel = new Label("L O G I N");
-		titleLabel.setStyle("font-weight: bold; font-size: 27px;");
 		titleLabel.setParent(vlayout2);
+		titleLabel.setStyle("font-weight: bold; font-size: 27px;");
 
 		commentLabel = new Label();
 		commentLabel.setStyle("color: red;");
@@ -59,6 +64,7 @@ public class LoginWindow extends Vlayout {
 		Rows rows = new Rows();
 
 		Row userRow = new Row();
+		userRow.setStyle("text-align: left");
 		Cell usernameLabelCell = new Cell();
 		Label usernameLabel = new Label("User name");
 		usernameLabelCell.setWidth("100px");
@@ -73,7 +79,7 @@ public class LoginWindow extends Vlayout {
 					}
 				});
 		userRow.appendChild(usernameTextbox);
-		userRow.setStyle("border: 0;");
+		userRow.setStyle("border: 0;text-align: left;");
 		rows.appendChild(userRow);
 
 		Row passwordRow = new Row();
@@ -97,8 +103,53 @@ public class LoginWindow extends Vlayout {
 				});
 
 		passwordRow.appendChild(passwordTextbox);
-		passwordRow.setStyle("border: 0;");
+		passwordRow.setStyle("border: 0;text-align: left;");
 		rows.appendChild(passwordRow);
+
+		Row themeRow = new Row();
+		themeRow.setParent(rows);
+		themeRow.setStyle("border: 0;text-align: left;");
+		Cell themeCell = new Cell();
+		themeCell.setParent(themeRow);
+		themeCell.setWidth("100px");
+		Label themeLabel = new Label("Theme");
+		themeLabel.setParent(themeCell);
+		Selectbox themeSelectbox = new Selectbox();
+		themeSelectbox.setParent(themeRow);
+		themeSelectbox.setWidth("200px");
+		String[] themeList = new String[] {  "Atlantic", "Bootstrap",
+				"Breeze", "Cerulean", "Cosmo", "Cyan", "Dark", "Flatly", "Journal",
+				"Sapphire", "Silvertail" };
+		ListModelList<String> themeListModelList = new ListModelList<String>(themeList);
+		ListModel<String> listModel = themeListModelList;
+		themeSelectbox.setModel(listModel);
+
+		themeSelectbox.addEventListener(Events.ON_SELECT,
+				new EventListener<Event>() {
+					public void onEvent(Event themeEvent) {
+						Selectbox selectbox = (Selectbox) themeEvent
+								.getTarget();
+						Library.setProperty(
+								"org.zkoss.theme.preferred",
+								selectbox
+										.getModel()
+										.getElementAt(
+												selectbox.getSelectedIndex())
+										.toString().toLowerCase());
+						Executions.sendRedirect(null);
+					}
+
+				});
+		String themeUsed = Library.getProperty("org.zkoss.theme.preferred");
+		if (themeUsed.equalsIgnoreCase("dark")) {
+			vlayout2.setStyle("border-radius: 10px; text-align: center; padding: 20px; margin-top: 200px; background: #060606;");
+		}	else if (themeUsed.equalsIgnoreCase("cyan")) {
+			vlayout2.setStyle("border-radius: 10px; text-align: center; padding: 20px; margin-top: 200px; background: #108a93;");
+		} else {
+			vlayout2.setStyle("border-radius: 10px; text-align: center; padding: 20px; margin-top: 200px; background: #FFF;");
+		}
+		themeUsed = themeUsed.substring(0,1).toUpperCase() + themeUsed.substring(1);
+		themeListModelList.addToSelection(themeUsed);
 
 		grid.appendChild(rows);
 		grid.setParent(vlayout2);
@@ -164,7 +215,7 @@ public class LoginWindow extends Vlayout {
 
 		}
 	}
-	
+
 	public void openLoginWindow() {
 		usernameTextbox.setFocus(true);
 	}

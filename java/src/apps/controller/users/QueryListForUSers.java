@@ -13,23 +13,18 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
-import org.zkoss.zul.Button;
-import org.zkoss.zul.Checkbox;
-import org.zkoss.zul.Column;
-import org.zkoss.zul.Columns;
-import org.zkoss.zul.Foot;
-import org.zkoss.zul.Footer;
-import org.zkoss.zul.Grid;
 import org.zkoss.zul.Image;
-import org.zkoss.zul.Label;
 import org.zkoss.zul.ListModelList;
-import org.zkoss.zul.Messagebox;
-import org.zkoss.zul.Row;
-import org.zkoss.zul.RowRenderer;
+import org.zkoss.zul.Listbox;
+import org.zkoss.zul.Listcell;
+import org.zkoss.zul.Listhead;
+import org.zkoss.zul.Listheader;
+import org.zkoss.zul.Listitem;
+import org.zkoss.zul.ListitemRenderer;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
-import apps.components.CheckboxCustomize;
+import apps.components.ListcellCustomize;
 import apps.controller.queryy.QueryListWindow;
 import apps.entity.QueryData;
 import apps.entity.Users;
@@ -46,23 +41,21 @@ public class QueryListForUSers extends Window {
 
 	ServiceMain serviceMain;
 	private CheckService checkService;
-	
+
 	private Window window;
 	private Textbox namedSearchingTextbox;
 	private Textbox sqlSearchingTextbox;
 	private ListModelList<QueryData> queryListModelList;
-	private Grid grid;
+	private Listbox listbox;
 	private Users _user;
 	private List<Integer> queryIDOnData;
 	private List<UsersQuery> userQueries;
-	private Checkbox checkbox;
-	private boolean _showFirst = true;
 
 	public QueryListForUSers(String title, Users user) {
 		super(title, null, true);
 		window = this;
 		_user = user;
-		
+
 		serviceMain = new ServiceImplMain();
 		checkService = new CheckService();
 
@@ -90,77 +83,91 @@ public class QueryListForUSers extends Window {
 
 		}
 
-		grid = new Grid();
-		grid.setParent(window);
-		grid.setHeight("500px");
-		grid.setAutopaging(true);
-		grid.setRowRenderer(new MyRowRenderer());
+		listbox = new Listbox();
+		listbox.setParent(window);
+		listbox.setHeight("500px");
+		listbox.setAutopaging(true);
+		listbox.setCheckmark(true);
+		listbox.setItemRenderer(new MyItemRenderer());
+		listbox.setAttribute("onCheckSelectAll", true);
+		listbox.addEventListener("onCheckSelectAll",
+				new EventListener<Event>() {
+					public void onEvent(Event itemEvent) {
+						window.setClosable(false);
+						List<Listitem> listitems = listbox.getItems();
+						if (listitems.size() > 0) {
+							Session session = null;
+							try {
 
-		Columns columns = new Columns();
-		columns.setParent(grid);
-		columns.setSizable(true);
+								session = hibernateUtil.getSessionFactory()
+										.openSession();
+								for (Listitem itemSelected : listitems) {
+									ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
+											.getChildren().get(0);
+									QueryData queryData = (QueryData) listcellCustomize
+											.getDataObject();
 
-		Column blankColumn = new Column();
-		blankColumn.setStyle("border: 0; border-style: none; border-width: 0;");
-		blankColumn.setWidth("50px");
-		blankColumn.setParent(columns);
+									Criteria criteria = session
+											.createCriteria(UsersQuery.class);
+									criteria.add(Restrictions.eq("queryData",
+											queryData));
+									criteria.add(Restrictions.eq("userData",
+											_user));
 
-		Column queryNameColumn = new Column("Query name");
-		queryNameColumn.setParent(columns);
-		try {
-			queryNameColumn.setSort("auto(named)");
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage(), e);
-			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
-					Messagebox.ERROR);
-		} catch (InstantiationException e) {
-			logger.error(e.getMessage(), e);
-			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
-					Messagebox.ERROR);
-		} catch (IllegalAccessException e) {
-			logger.error(e.getMessage(), e);
-			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
-					Messagebox.ERROR);
-		}
-		Column sqlColumn = new Column("Query");
-		sqlColumn.setParent(columns);
-		try {
-			sqlColumn.setSort("auto(sql_query)");
-		} catch (ClassNotFoundException e) {
-			logger.error(e.getMessage(), e);
-			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
-					Messagebox.ERROR);
-		} catch (InstantiationException e) {
-			logger.error(e.getMessage(), e);
-			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
-					Messagebox.ERROR);
-		} catch (IllegalAccessException e) {
-			logger.error(e.getMessage(), e);
-			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
-					Messagebox.ERROR);
-		}
+									if (itemSelected.isSelected()
+											&& criteria.list().size() == 0) {
+										UsersQuery usersQuery = new UsersQuery(
+												_user, queryData);
+										Transaction trx = session
+												.beginTransaction();
+										session.save(usersQuery);
+										queryData.setDeleted(false);
+										session.update(queryData);
+										trx.commit();
+									} else if (!itemSelected.isSelected()
+											&& criteria.list().size() > 0) {
+										UsersQuery usersQuery = (UsersQuery) criteria
+												.uniqueResult();
+										Transaction trx = session
+												.beginTransaction();
+										session.delete(usersQuery);
+										trx.commit();
+										checkService.queryIsDeleted(queryData);
+
+									}
+								}
+								checkService.userIsDeleted(_user);
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+
+							} finally {
+								if (session != null) {
+									try {
+										session.close();
+									} catch (Exception e) {
+										logger.error(e.getMessage(), e);
+									}
+								}
+
+							}
+						}
+						window.setClosable(true);
+					}
+				});
+
+		Listhead userListhead = new Listhead();
+		userListhead.setParent(listbox);
+		userListhead.setSizable(true);
+
+		Listheader queryNameListheader = new Listheader("User name");
+		queryNameListheader.setParent(userListhead);
+		queryNameListheader.setSort("auto(named)");
+		Listheader sqlNameListheader = new Listheader("User name");
+		sqlNameListheader.setParent(userListhead);
+		sqlNameListheader.setSort("auto(sql_query)");
 
 		Auxhead auxhead = new Auxhead();
-		auxhead.setParent(grid);
-
-		Auxheader checkAuxheader = new Auxheader();
-		checkAuxheader.setParent(auxhead);
-		checkbox = new Checkbox();
-		checkbox.setParent(checkAuxheader);
-		checkbox.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
-			public void onEvent(Event checkboxEvent) {
-				_showFirst = false;
-				if (checkbox.isChecked()) {
-					List<Row> rows = grid.getRows().getChildren();
-					for (Row row : rows) {
-						((CheckboxCustomize) row.getChildren().get(0))
-								.setChecked(checkbox.isChecked());
-					}
-				} else {
-					refreshGrid();
-				}
-			}
-		});
+		auxhead.setParent(listbox);
 
 		Auxheader namedAuxheader = new Auxheader();
 		namedAuxheader.setParent(auxhead);
@@ -198,86 +205,6 @@ public class QueryListForUSers extends Window {
 
 		refreshGrid();
 
-		Foot gridFoot = new Foot();
-		gridFoot.setParent(grid);
-		Footer gridFooter = new Footer();
-		gridFooter.setParent(gridFoot);
-		gridFooter.setStyle("text-align:center;");
-		gridFooter.setSpan(2);
-		Button saveButton = new Button("Save");
-		saveButton.setImage("image/save.png");
-		saveButton.setParent(gridFooter);
-		saveButton.addEventListener(Events.ON_CLICK,
-				new EventListener<Event>() {
-					public void onEvent(Event rowSelectedEvent) {
-						List<Row> rowComponents = grid.getRows()
-								.getChildren();
-
-						Session session = null;
-						try {
-							session = hibernateUtil.getSessionFactory()
-									.openSession();
-
-							for (Row row : rowComponents) {
-								CheckboxCustomize checkboxCustomize = (CheckboxCustomize) row
-										.getChildren().get(0);
-								QueryData queryData = (QueryData) checkboxCustomize
-										.get_dataCustom();
-								if (checkboxCustomize.isChecked()) {
-									if (queryIDOnData.size() == 0
-											|| (queryIDOnData.size() > 0 && !queryIDOnData
-													.contains(queryData.getId()))) {
-										UsersQuery usersQuery = new UsersQuery(
-												_user, queryData);
-										Transaction trx = session
-												.beginTransaction();
-										session.save(usersQuery);
-										_user.setIsdeleted(false);
-										session.update(_user);
-										queryData.setDeleted(false);
-										session.update(queryData);
-										trx.commit();
-									}
-
-								} else if (queryIDOnData.size() > 0
-										&& queryIDOnData.contains(queryData.getId())) {
-
-									for (UsersQuery usersQuery : userQueries) {
-										QueryData queryDataSelected = usersQuery
-												.getQueryData();
-										if (queryDataSelected.getId().equals(
-												queryData.getId())) {
-											Transaction trx = session
-													.beginTransaction();
-											session.delete(usersQuery);
-											trx.commit();
-											checkService
-													.queryIsDeleted(queryDataSelected);
-											checkService
-													.userIsDeleted(usersQuery.getUserData());
-										}
-									}
-
-								}
-							}
-
-						} catch (Exception e) {
-							logger.error(e.getMessage(), e);
-
-						} finally {
-							if (session != null) {
-								try {
-									session.close();
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-								}
-							}
-
-						}
-
-						detach();
-					}
-				});
 	}
 
 	public void refreshGrid() {
@@ -294,7 +221,7 @@ public class QueryListForUSers extends Window {
 			}
 			List<QueryData> queryDatas = criteria.list();
 			queryListModelList = new ListModelList<QueryData>(queryDatas);
-			grid.setModel(queryListModelList);
+			listbox.setModel(queryListModelList);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
@@ -310,22 +237,76 @@ public class QueryListForUSers extends Window {
 		}
 	}
 
-	public class MyRowRenderer implements RowRenderer<QueryData> {
+	public class MyItemRenderer implements ListitemRenderer<QueryData> {
 
 		@Override
-		public void render(Row row, QueryData queryData, int index)
+		public void render(Listitem item, QueryData queryData, int index)
 				throws Exception {
-			CheckboxCustomize checkboxCustomize = new CheckboxCustomize(
-					queryData);
-			if (_showFirst && queryIDOnData.contains(queryData.getId())) {
-				checkboxCustomize.setChecked(true);
-			} else if (!_showFirst && !checkbox.isChecked()) {
-				checkboxCustomize.setChecked(false);
+			if (queryIDOnData.contains(queryData.getId())) {
+				item.setSelected(true);
 			}
-			checkboxCustomize.setParent(row);
+			item.appendChild(new ListcellCustomize(queryData.getNamed(),
+					queryData));
+			item.appendChild(new Listcell(queryData.getSql()));
+			item.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+				public void onEvent(Event itemEvent) {
 
-			row.appendChild(new Label(queryData.getNamed()));
-			row.appendChild(new Label(queryData.getSql()));
+					Session session = null;
+					try {
+						Listitem itemSelected = (Listitem) itemEvent
+								.getTarget();
+						ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
+								.getChildren().get(0);
+						QueryData queryData = (QueryData) listcellCustomize
+								.getDataObject();
+
+						session = hibernateUtil.getSessionFactory()
+								.openSession();
+						Criteria criteria = session
+								.createCriteria(UsersQuery.class);
+						criteria.add(Restrictions.eq("queryData", queryData));
+						criteria.add(Restrictions.eq("userData", _user));
+
+						if (itemSelected.isSelected()
+								&& criteria.list().size() == 0) {
+							UsersQuery usersQuery = new UsersQuery(_user,
+									queryData);
+							Transaction trx = session.beginTransaction();
+							session.save(usersQuery);
+							_user.setIsdeleted(false);
+							session.update(_user);
+							queryData.setDeleted(false);
+							session.update(queryData);
+							trx.commit();
+						} else if (!itemSelected.isSelected()
+								&& criteria.list().size() > 0) {
+							UsersQuery usersQuery = (UsersQuery) criteria
+									.uniqueResult();
+							Transaction trx = session.beginTransaction();
+							session.delete(usersQuery);
+							trx.commit();
+							checkService.queryIsDeleted(queryData);
+							checkService.userIsDeleted(_user);
+						}
+					} catch (Exception e) {
+						logger.error(e.getMessage(), e);
+
+					} finally {
+						if (session != null) {
+							try {
+								session.close();
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+							}
+						}
+
+					}
+				}
+
+			});
+			if (!listbox.isMultiple()) {
+				listbox.setMultiple(true);
+			}
 		}
 	}
 }

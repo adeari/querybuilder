@@ -89,7 +89,7 @@ public class QueryWindows extends Window {
 		titleLabel.setParent(titleCell);
 		titleCell.setWidth("97%");
 		titleCell.setParent(northRow);
-		titleCell.setStyle("background: yellow");
+		titleCell.setStyle("background: yellow; color: #000;");
 
 		Cell closeCell = new Cell();
 		closeCell.setStyle("background: yellow");
@@ -214,7 +214,7 @@ public class QueryWindows extends Window {
 
 									trx.commit();
 									if (!userBefore.equals(user)) {
-										checkService.userIsDeleted(userBefore);
+										checkService.userIsDeleted( userBefore);
 									}
 									
 									
@@ -618,7 +618,7 @@ public class QueryWindows extends Window {
 							MenuitemWithData menuitemPopupItemTableInsert = new MenuitemWithData(
 									"Insert");
 							menuitemPopupItemTableInsert
-									.setImage("image/rss.png");
+									.setImage("image/sql.png");
 							menuitemPopupItemTableInsert
 									.set_querySelectFinal(queryInsert);
 							menuitemPopupItemTableInsert
@@ -658,7 +658,7 @@ public class QueryWindows extends Window {
 							menuitemPopupItemTableUpdate
 									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
 							menuitemPopupItemTableUpdate
-									.setImage("image/rss.png");
+									.setImage("image/sql.png");
 							menuitemPopupItemTableUpdate.addEventListener(
 									"onClick", new EventListener<Event>() {
 										public void onEvent(
@@ -686,7 +686,7 @@ public class QueryWindows extends Window {
 							MenuitemWithData menuitemPopupItemTableDelete = new MenuitemWithData(
 									"Delete");
 							menuitemPopupItemTableDelete
-									.setImage("image/rss.png");
+									.setImage("image/sql.png");
 							menuitemPopupItemTableDelete
 									.set_querySelectFinal(queryDelete);
 							menuitemPopupItemTableDelete

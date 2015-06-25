@@ -13,26 +13,23 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
-import org.zkoss.zul.Button;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.Checkbox;
-import org.zkoss.zul.Column;
-import org.zkoss.zul.Columns;
-import org.zkoss.zul.Foot;
-import org.zkoss.zul.Footer;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.Label;
-import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
+import org.zkoss.zul.Listbox;
+import org.zkoss.zul.Listhead;
+import org.zkoss.zul.Listheader;
+import org.zkoss.zul.Listitem;
+import org.zkoss.zul.ListitemRenderer;
 import org.zkoss.zul.Row;
-import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.Rows;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
-import apps.components.CheckboxCustomize;
+import apps.components.ListcellCustomize;
 import apps.entity.QueryData;
 import apps.entity.Users;
 import apps.entity.UsersQuery;
@@ -40,6 +37,8 @@ import apps.service.CheckService;
 import apps.service.hibernateUtil;
 
 public class UserListForQueryList extends Window {
+	private static final long serialVersionUID = -2427362927265074408L;
+
 	private static final Logger logger = Logger
 			.getLogger(UserListForQueryList.class);
 
@@ -47,22 +46,22 @@ public class UserListForQueryList extends Window {
 
 	private Window _userListWindow;
 	private ListModelList<Users> userListModelList;
-	private Grid userListGrid;
+	private Listbox userListbox;
 	private QueryData _queryData;
 	private List<Integer> userIDOnData;
 	private List<UsersQuery> userQueries;
 	private Textbox userSearchTextbox;
-	private Checkbox checkbox;
-	private boolean _showFirst = true;
 
 	UserListForQueryList(String title, QueryData queryData) {
 		super(title, null, true);
 		_queryData = queryData;
+		
 
 		checkService = new CheckService();
 		_userListWindow = this;
 		_userListWindow.setMaximizable(true);
 		_userListWindow.setMaximized(true);
+
 		Vlayout vlayout = new Vlayout();
 		vlayout.setParent(_userListWindow);
 
@@ -127,54 +126,96 @@ public class UserListForQueryList extends Window {
 
 		}
 
-		userListGrid = new Grid();
-		userListGrid.setParent(vlayout);
-		userListGrid.setAutopaging(true);
-		userListGrid.setHeight("400px");
-		userListGrid.setRowRenderer(new MyRowRenderer());
+		userListbox = new Listbox();
+		userListbox.setParent(vlayout);
+		userListbox.setAutopaging(true);
+		userListbox.setHeight("400px");
+		userListbox.setCheckmark(true);
+		userListbox.setItemRenderer(new MyListitemRenderer());
+		userListbox.setAttribute("onCheckSelectAll", true);
+		userListbox.addEventListener("onCheckSelectAll",
+				new EventListener<Event>() {
+					public void onEvent(Event itemEvent) {
+						_userListWindow.setClosable(false);
+						List<Listitem> listitems = userListbox.getItems();
+						if (listitems.size() > 0) {
+							Session session = null;
+							try {
+
+								session = hibernateUtil.getSessionFactory()
+										.openSession();
+								for (Listitem itemSelected : listitems) {
+									ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
+											.getChildren().get(0);
+									Users userSelected = (Users) listcellCustomize
+											.getDataObject();
+
+									Criteria criteria = session
+											.createCriteria(UsersQuery.class);
+									criteria.add(Restrictions.eq("queryData",
+											_queryData));
+									criteria.add(Restrictions.eq("userData",
+											userSelected));
+
+									if (itemSelected.isSelected()
+											&& criteria.list().size() == 0) {
+										UsersQuery usersQuery = new UsersQuery(
+												userSelected, _queryData);
+										Transaction trx = session
+												.beginTransaction();
+										session.save(usersQuery);
+										userSelected.setIsdeleted(false);
+										session.update(userSelected);
+										trx.commit();
+									} else if (!itemSelected.isSelected()
+											&& criteria.list().size() > 0) {
+										UsersQuery usersQuery = (UsersQuery) criteria
+												.uniqueResult();
+										Transaction trx = session
+												.beginTransaction();
+										session.delete(usersQuery);
+										trx.commit();
+
+										checkService
+												.userIsDeleted(userSelected);
+									}
+								}
+								checkService.queryIsDeleted(_queryData);
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+
+							} finally {
+								if (session != null) {
+									try {
+										session.close();
+									} catch (Exception e) {
+										logger.error(e.getMessage(), e);
+									}
+								}
+
+							}
+						}
+						_userListWindow.setClosable(true);
+					}
+				});
 
 		Auxhead auxhead = new Auxhead();
-		auxhead.setParent(userListGrid);
+		auxhead.setParent(userListbox);
 
 		Auxheader labelGridAuxheader = new Auxheader(
 				"Select users which can access this query");
-		labelGridAuxheader.setStyle("background: #FFF;color: #000;");
 		labelGridAuxheader.setImage("image/columnicon.png");
-		labelGridAuxheader.setColspan(2);
 		labelGridAuxheader.setParent(auxhead);
 
-		Columns userColumns = new Columns();
-		userColumns.setParent(userListGrid);
-		userColumns.setSizable(true);
+		Listhead userListhead = new Listhead();
+		userListhead.setParent(userListbox);
+		userListhead.setSizable(true);
 
-		Column blankColumn = new Column();
-		blankColumn.setParent(userColumns);
-		blankColumn.setWidth("50px");
-
-		Column username = new Column("User name");
-		username.setParent(userColumns);
+		Listheader usernameListheader = new Listheader("User name");
+		usernameListheader.setParent(userListhead);
 
 		Auxhead searchAuxhead = new Auxhead();
-		searchAuxhead.setParent(userListGrid);
-
-		Auxheader checkAuxheader = new Auxheader();
-		checkAuxheader.setParent(searchAuxhead);
-		checkbox = new Checkbox();
-		checkbox.setParent(checkAuxheader);
-		checkbox.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
-			public void onEvent(Event checkboxEvent) {
-				_showFirst = false;
-				if (checkbox.isChecked()) {
-					List<Row> rows = userListGrid.getRows().getChildren();
-					for (Row row : rows) {
-						((CheckboxCustomize) row.getChildren().get(0))
-								.setChecked(checkbox.isChecked());
-					}
-				} else {
-					refreshUserGrid(userSearchTextbox.getValue());
-				}
-			}
-		});
+		searchAuxhead.setParent(userListbox);
 
 		Auxheader searchAuxheader = new Auxheader();
 		searchAuxheader.setParent(searchAuxhead);
@@ -193,87 +234,6 @@ public class UserListForQueryList extends Window {
 
 		refreshUserGrid(null);
 
-		Foot userListFoot = new Foot();
-		userListFoot.setParent(userListGrid);
-		Footer userListFooter = new Footer();
-		userListFooter.setParent(userListFoot);
-		userListFooter.setStyle("text-align:center;");
-		userListFooter.setSpan(2);
-		Button saveButton = new Button("Save");
-		saveButton.setImage("image/save.png");
-		saveButton.setParent(userListFooter);
-		saveButton.addEventListener(Events.ON_CLICK,
-				new EventListener<Event>() {
-					public void onEvent(Event rowSelectedEvent) {
-						List<Row> rowComponents = userListGrid.getRows()
-								.getChildren();
-
-						Session session = null;
-						try {
-							session = hibernateUtil.getSessionFactory()
-									.openSession();
-
-							for (Row row : rowComponents) {
-								CheckboxCustomize checkboxCustomize = (CheckboxCustomize) row
-										.getChildren().get(0);
-								Users user = (Users) checkboxCustomize
-										.get_dataCustom();
-								if (checkboxCustomize.isChecked()) {
-									if (userIDOnData.size() == 0
-											|| (userIDOnData.size() > 0 && !userIDOnData
-													.contains(user.getId()))) {
-										UsersQuery usersQuery = new UsersQuery(
-												user, _queryData);
-										Transaction trx = session
-												.beginTransaction();
-										session.save(usersQuery);
-										user.setIsdeleted(false);
-										session.update(user);
-										_queryData.setDeleted(false);
-										session.update(_queryData);
-										trx.commit();
-									}
-
-								} else if (userIDOnData.size() > 0
-										&& userIDOnData.contains(user.getId())) {
-
-									for (UsersQuery usersQuery : userQueries) {
-										Users user1inQuery = usersQuery
-												.getUserData();
-										if (user1inQuery.getId().equals(
-												user.getId())) {
-											Transaction trx = session
-													.beginTransaction();
-											session.delete(usersQuery);
-											trx.commit();
-											checkService
-													.queryIsDeleted(usersQuery
-															.getQueryData());
-											checkService
-													.userIsDeleted(user1inQuery);
-										}
-									}
-
-								}
-							}
-
-						} catch (Exception e) {
-							logger.error(e.getMessage(), e);
-
-						} finally {
-							if (session != null) {
-								try {
-									session.close();
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-								}
-							}
-
-						}
-
-						detach();
-					}
-				});
 	}
 
 	public void refreshUserGrid(String usernameSearch) {
@@ -289,8 +249,7 @@ public class UserListForQueryList extends Window {
 			}
 			List<Users> users = criteria.list();
 			userListModelList = new ListModelList<Users>(users);
-			userListGrid.setModel(userListModelList);
-
+			userListbox.setModel(userListModelList);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
@@ -306,19 +265,79 @@ public class UserListForQueryList extends Window {
 		}
 	}
 
-	public class MyRowRenderer implements RowRenderer<Users> {
+	public class MyListitemRenderer implements ListitemRenderer<Users> {
 
 		@Override
-		public void render(Row row, Users user, int index) throws Exception {
-			CheckboxCustomize checkboxCustomize = new CheckboxCustomize(user);
-			if (_showFirst && userIDOnData.contains(user.getId())) {
-				checkboxCustomize.setChecked(true);
-			} else if (!_showFirst && !checkbox.isChecked()) {
-				checkboxCustomize.setChecked(false);
+		public void render(Listitem item, Users user, int index)
+				throws Exception {
+			if (userIDOnData.contains(user.getId())) {
+				item.setSelected(true);
 			}
-			checkboxCustomize.setParent(row);
-			Label usernameLabel = new Label(user.getUsername());
-			usernameLabel.setParent(row);
+
+			item.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+				public void onEvent(Event itemEvent) {
+
+					Session session = null;
+					try {
+						Listitem itemSelected = (Listitem) itemEvent
+								.getTarget();
+						ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
+								.getChildren().get(0);
+						Users userSelected = (Users) listcellCustomize
+								.getDataObject();
+
+						session = hibernateUtil.getSessionFactory()
+								.openSession();
+						Criteria criteria = session
+								.createCriteria(UsersQuery.class);
+						criteria.add(Restrictions.eq("queryData", _queryData));
+						criteria.add(Restrictions.eq("userData", userSelected));
+
+						if (itemSelected.isSelected()
+								&& criteria.list().size() == 0) {
+							UsersQuery usersQuery = new UsersQuery(
+									userSelected, _queryData);
+							Transaction trx = session.beginTransaction();
+							session.save(usersQuery);
+							userSelected.setIsdeleted(false);
+							session.update(userSelected);
+							_queryData.setDeleted(false);
+							session.update(_queryData);
+							trx.commit();
+						} else if (!itemSelected.isSelected()
+								&& criteria.list().size() > 0) {
+							UsersQuery usersQuery = (UsersQuery) criteria
+									.uniqueResult();
+							Transaction trx = session.beginTransaction();
+							session.delete(usersQuery);
+							trx.commit();
+							checkService.queryIsDeleted(_queryData);
+							checkService.userIsDeleted(userSelected);
+						}
+					} catch (Exception e) {
+						logger.error(e.getMessage(), e);
+
+					} finally {
+						if (session != null) {
+							try {
+								session.close();
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+							}
+						}
+
+					}
+				}
+
+			});
+
+			ListcellCustomize usernameListcell = new ListcellCustomize(
+					user.getUsername(), user);
+
+			usernameListcell.setParent(item);
+			if (!userListbox.isMultiple()) {
+				userListbox.setMultiple(true);
+			}
 		}
 	}
 }
