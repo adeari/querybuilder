@@ -213,6 +213,7 @@ public class UserListForQueryList extends Window {
 
 		Listheader usernameListheader = new Listheader("User name");
 		usernameListheader.setParent(userListhead);
+		usernameListheader.setSort("auto(username)");
 
 		Auxhead searchAuxhead = new Auxhead();
 		searchAuxhead.setParent(userListbox);

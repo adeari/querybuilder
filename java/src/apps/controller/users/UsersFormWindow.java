@@ -42,6 +42,7 @@ public class UsersFormWindow extends Window {
 	private Selectbox divisiSelectbox;
 	private Textbox password2Textbox;
 	private Textbox passwordTextbox;
+	private Textbox emailTextbox;
 	private Label commentLabel;
 	private Div div;
 
@@ -49,10 +50,11 @@ public class UsersFormWindow extends Window {
 
 	public UsersFormWindow(String title, Users user) {
 		super(title, null, true);
+		_user = user;
 		_eventName = "";
 
 		servviceMain = new ServiceImplMain();
-		
+
 		div = new Div();
 		div.setParent(this);
 		div.setVisible(false);
@@ -60,12 +62,11 @@ public class UsersFormWindow extends Window {
 		commentLabel = new Label();
 		commentLabel.setParent(div);
 		commentLabel.setStyle("color: red;");
-		
+
 		Grid grid = new Grid();
 
 		Rows rows = new Rows();
 
-		
 		Row row = new Row();
 		row.setParent(rows);
 		Cell labelCell = new Cell();
@@ -78,8 +79,6 @@ public class UsersFormWindow extends Window {
 		usernameTextbox = new Textbox();
 		usernameTextbox.setParent(insertCell);
 
-		
-		
 		row = new Row();
 		Label divisiLabel = new Label("Divisi");
 		divisiLabel.setWidth("90px");
@@ -99,6 +98,17 @@ public class UsersFormWindow extends Window {
 		divisiSelectbox.setSelectedIndex(1);
 
 		rows.appendChild(row);
+		
+		row = new Row();
+		row.setParent(rows);
+		Label emailLabel = new Label("Email");
+		emailLabel.setParent(row);
+		emailTextbox = new Textbox();
+		emailTextbox.setParent(row);
+		emailTextbox.setWidth("190px");
+		if (_user != null && (_user.getEmail() != null && (!_user.getEmail().isEmpty()))) {
+				emailTextbox.setText(_user.getEmail());
+		}
 
 		row = new Row();
 		Label passwordLabel = new Label("Password");
@@ -118,8 +128,7 @@ public class UsersFormWindow extends Window {
 		row.appendChild(password2Textbox);
 		rows.appendChild(row);
 
-		if (user != null) {
-			_user = user;
+		if (_user != null) {
 			usernameTextbox.setValue(_user.getUsername());
 			usernameTextbox.setReadonly(true);
 
@@ -132,7 +141,7 @@ public class UsersFormWindow extends Window {
 				}
 			}
 		}
-		
+
 		row = new Row();
 		Cell cell = new Cell();
 		cell.setColspan(2);
@@ -151,6 +160,12 @@ public class UsersFormWindow extends Window {
 								commentLabel.setValue("Enter user name");
 								div.setVisible(true);
 								usernameTextbox.setFocus(true);
+								canSAve = false;
+							}
+							if (canSAve && emailTextbox.getValue().isEmpty()) {
+								commentLabel.setValue("Enter email");
+								div.setVisible(true);
+								emailTextbox.setFocus(true);
 								canSAve = false;
 							}
 
@@ -189,7 +204,43 @@ public class UsersFormWindow extends Window {
 									}
 
 								}
+							}
+							
+							if (canSAve
+									&& !emailTextbox.getValue().isEmpty()) {
 
+								Session sessionSelect = null;
+								try {
+									sessionSelect = hibernateUtil
+											.getSessionFactory().openSession();
+									Criteria criteria = sessionSelect
+											.createCriteria(Users.class);
+									criteria.add(Restrictions.eq("email",
+											emailTextbox.getValue()));
+									if (_user != null) {
+										criteria.add(Restrictions.ne("id",
+												_user.getId()));
+									}
+									if (criteria.list().size() > 0) {
+										commentLabel
+												.setValue("This email already exist");
+										div.setVisible(true);
+										emailTextbox.setFocus(true);
+										canSAve = false;
+									}
+								} catch (Exception e) {
+									logger.error(e.getMessage(), e);
+
+								} finally {
+									if (sessionSelect != null) {
+										try {
+											sessionSelect.close();
+										} catch (Exception e) {
+											logger.error(e.getMessage(), e);
+										}
+									}
+
+								}
 							}
 
 							if (_user == null) {
@@ -224,8 +275,8 @@ public class UsersFormWindow extends Window {
 								}
 
 								if (canSAve
-										&& !password2Textbox.getValue().equals(
-												passwordTextbox.getValue())) {
+										&& !password2Textbox.getValue().toString().equalsIgnoreCase(
+												passwordTextbox.getValue().toString())) {
 									commentLabel.setValue("password not same");
 									div.setVisible(true);
 									password2Textbox.setFocus(true);
@@ -234,53 +285,62 @@ public class UsersFormWindow extends Window {
 							}
 
 							if (canSAve) {
-								Session session = hibernateUtil
-										.getSessionFactory().openSession();
-								if (_user == null) {
-									Transaction trx = session
-											.beginTransaction();
-									Users tbUsers = new Users(
-											usernameTextbox.getValue(),
-											servviceMain
-													.convertPass(password2Textbox
-															.getValue()),
-											divisiSelectbox
-													.getModel()
-													.getElementAt(
-															divisiSelectbox
-																	.getSelectedIndex())
-													.toString(), true);
+								Session session = null;
+								try {
+									session = hibernateUtil.getSessionFactory()
+											.openSession();
+									if (_user == null) {
+										Transaction trx = session
+												.beginTransaction();
+										Users tbUsers = new Users(
+												usernameTextbox.getValue(),
+												servviceMain
+														.convertPass(password2Textbox
+																.getValue()),
+												divisiSelectbox
+														.getModel()
+														.getElementAt(
+																divisiSelectbox
+																		.getSelectedIndex())
+														.toString(), true, emailTextbox.getValue());
 
-									session.save(tbUsers);
-									trx.commit();
-									_eventName = "Add";
-								} else {
-									Criteria criteria = session
-											.createCriteria(Users.class);
-									criteria.add(Restrictions.eq("id",
-											_user.getId()));
-									Transaction trx = session
-											.beginTransaction();
-									Users tbUsers = (Users) criteria
-											.uniqueResult();
-									if (!password2Textbox.getValue().isEmpty()) {
-										tbUsers.setPass(servviceMain
-												.convertPass(password2Textbox
-														.getValue()));
+										session.save(tbUsers);
+										trx.commit();
+										_eventName = "Add";
+									} else {
+										Transaction trx = session
+												.beginTransaction();
+										if (!password2Textbox.getValue()
+												.isEmpty()) {
+											_user.setPass(servviceMain
+													.convertPass(password2Textbox
+															.getValue()));
+										}
+										_user.setDivisi(divisiSelectbox
+												.getModel()
+												.getElementAt(
+														divisiSelectbox
+																.getSelectedIndex())
+												.toString());
+										_user.setEmail(emailTextbox.getValue());
+										session.update(_user);
+										trx.commit();
+										_eventName = "Edit";
 									}
-									tbUsers.setDivisi(divisiSelectbox
-											.getModel()
-											.getElementAt(
-													divisiSelectbox
-															.getSelectedIndex())
-											.toString());
-									_user.setDivisi(tbUsers.getDivisi());
-									session.update(tbUsers);
-									trx.commit();
-									_eventName = "Edit";
+									detach();
+								} catch (Exception e) {
+									logger.error(e.getMessage(), e);
+
+								} finally {
+									if (session != null) {
+										try {
+											session.close();
+										} catch (Exception e) {
+											logger.error(e.getMessage(), e);
+										}
+									}
+
 								}
-								session.close();
-								detach();
 							}
 
 							saveButton.setDisabled(false);

@@ -132,6 +132,7 @@ public class QuerySavedWindow extends Window {
 									session.update(user);
 
 									trx.commit();
+									detach();
 								}
 								} catch (Exception e) {
 									logger.error(e.getMessage(), e);
@@ -140,13 +141,14 @@ public class QuerySavedWindow extends Window {
 									if (session != null) {
 										try {
 											session.close();
+											
 										} catch (Exception e) {
 											logger.error(e.getMessage(), e);
 										} 
 									}
 									
 								}
-								detach();
+								
 							}
 
 							saveButton.setDisabled(false);

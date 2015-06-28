@@ -17,7 +17,6 @@ import javax.persistence.Table;
 public class UsersQuery implements Serializable {
 	private static final long serialVersionUID = -8768958995691885387L;
 	
-	
 	@Id
     @GeneratedValue(strategy = IDENTITY)
     @Column(name = "id", unique = true, nullable = false)

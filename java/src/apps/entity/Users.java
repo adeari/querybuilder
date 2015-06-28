@@ -3,7 +3,6 @@ package apps.entity;
 import static javax.persistence.GenerationType.IDENTITY;
 
 import java.io.Serializable;
-import java.sql.Date;
 import java.sql.Timestamp;
 
 import javax.persistence.Column;
@@ -37,15 +36,22 @@ public class Users implements Serializable {
 	@Column(name = "divisi", nullable = false, length = 200)
 	private String divisi;
 	
+	@Column(name = "theme", length = 50)
+	private String theme;
+	
+	@Column(name = "email")
+	private String email;
+	
 	public Users() {
 		
 	}
 	
-	public Users(String username1, String pass1, String divisi1, boolean isdeleted1) {
+	public Users(String username1, String pass1, String divisi1, boolean isdeleted1, String email1) {
 		username = username1;
 		pass = pass1;
 		divisi = divisi1;
 		isdeleted = isdeleted1;
+		email = email1;
 	}
 
 	public Integer getId() {
@@ -99,4 +105,21 @@ public class Users implements Serializable {
 	public void setDivisi(String divisi) {
 		this.divisi = divisi;
 	}
+
+	public String getTheme() {
+		return theme;
+	}
+
+	public void setTheme(String theme) {
+		this.theme = theme;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+	
 }

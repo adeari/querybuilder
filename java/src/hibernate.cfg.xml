@@ -13,6 +13,9 @@
     <mapping class="apps.entity.Users"/>
     <mapping class="apps.entity.QueryData"/>
     <mapping class="apps.entity.UsersQuery"/>
+    <mapping class="apps.entity.Activity"/>
+    <mapping class="apps.entity.FilesData"/>
+    <mapping class="apps.entity.FileSizeUsed"/>
     
   </session-factory>
 </hibernate-configuration>

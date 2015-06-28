@@ -1,5 +1,7 @@
 package apps.service;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -7,6 +9,8 @@ import org.hibernate.Transaction;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 
+import apps.entity.Activity;
+import apps.entity.FileSizeUsed;
 import apps.entity.QueryData;
 import apps.entity.Users;
 import apps.entity.UsersQuery;
@@ -49,6 +53,19 @@ public class CheckService {
 				Projections.rowCount());
 		criteria.add(Restrictions.eq("userData", user));
 		userCount += (long) criteria.uniqueResult();
+		
+		criteria = querySession.createCriteria(Activity.class).setProjection(
+				Projections.rowCount());
+		criteria.add(Restrictions.eq("userCreated", user));
+		userCount += (long) criteria.uniqueResult();
+		
+		criteria = querySession.createCriteria(FileSizeUsed.class);
+		criteria.add(Restrictions.eq("userOwner", user));
+		List<FileSizeUsed> fileSizeUseds = criteria.list();
+		for (FileSizeUsed fileSizeUsed : fileSizeUseds) {
+			userCount += Double.valueOf(fileSizeUsed.getFilesize()).longValue();
+		}
+		
 
 		Transaction trx = querySession.beginTransaction();
 

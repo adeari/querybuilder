@@ -1,6 +1,5 @@
 package apps.controller;
 
-import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.util.GenericForwardComposer;
 import org.zkoss.zul.Window;
@@ -19,18 +18,17 @@ public class IndexWindow  extends GenericForwardComposer<Window> {
 		windowMain.setMaximized(true);
 		windowMain.setContentSclass("imagebody");
 		
-		Session session = Sessions.getCurrent();
-		
 		LoginWindow loginWindow = new LoginWindow(windowMain);
 		windowMain.appendChild(loginWindow);
 		
 		MenuWindow menuWindow = new MenuWindow(windowMain);
 		windowMain.appendChild(menuWindow);
 		
-		if (session.getAttribute("userlogin") != null) {
-			loginWindow.setVisible(false);
-		} else {
+		if (Sessions.getCurrent().getAttribute("userlogin") == null) {
 			menuWindow.setVisible(false);
+		} else {
+			loginWindow.setVisible(false);
+			
 		}
 		
 	}

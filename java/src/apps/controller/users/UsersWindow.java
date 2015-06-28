@@ -34,9 +34,6 @@ import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
 import apps.components.ButtonCustom;
-import apps.controller.queryy.QueryListWindow;
-import apps.controller.queryy.UserListForQueryList;
-import apps.entity.QueryData;
 import apps.entity.Users;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
@@ -57,6 +54,7 @@ public class UsersWindow extends Window {
 	private ListModelList<Users> usersListModelList;
 	private Textbox usernameSearchingTextbox;
 	private Textbox divisiSearchingTextbox;
+	private Textbox emailSearchingTextbox;
 
 	public UsersWindow(String title) {
 		super(title, null, true);
@@ -82,15 +80,14 @@ public class UsersWindow extends Window {
 		northRow.appendChild(iconCell);
 		Image image = new Image("image/user.png");
 		iconCell.appendChild(image);
-		
 
 		Cell titleCell = new Cell();
 		titleCell.setParent(northRow);
-		titleCell.setStyle("background: yellow;width: 95%;border: 0; color: #000;");
+		titleCell
+				.setStyle("background: yellow;width: 95%;border: 0; color: #000;");
 		Label titleLabel = new Label(title);
 		titleLabel.setStyle("font-weight: bold; font-size: 16px");
 		titleLabel.setParent(titleCell);
-		
 
 		Cell closeCell = new Cell();
 		closeCell.setStyle("background: yellow;width: 3%;border: 0;");
@@ -195,6 +192,24 @@ public class UsersWindow extends Window {
 					Messagebox.ERROR);
 		}
 		columns.appendChild(divisiColumn);
+		
+		Column emailColumn = new Column("Email");
+		try {
+			emailColumn.setSort("auto(email)");
+		} catch (ClassNotFoundException e) {
+			logger.error(e.getMessage(), e);
+			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
+					Messagebox.ERROR);
+		} catch (InstantiationException e) {
+			logger.error(e.getMessage(), e);
+			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
+					Messagebox.ERROR);
+		} catch (IllegalAccessException e) {
+			logger.error(e.getMessage(), e);
+			Messagebox.show(e.getMessage(), "Error", Messagebox.OK,
+					Messagebox.ERROR);
+		}
+		columns.appendChild(emailColumn);
 
 		Column lastLoginColumn = new Column("Last login");
 		try {
@@ -216,10 +231,10 @@ public class UsersWindow extends Window {
 
 		columns.setSizable(true);
 		grid.appendChild(columns);
-		
+
 		Auxhead auxhead = new Auxhead();
 		auxhead.setParent(grid);
-		
+
 		Auxheader blankAuxheader = new Auxheader();
 		blankAuxheader
 				.setStyle("border: 0; border-style: none; border-width: 0;");
@@ -232,7 +247,7 @@ public class UsersWindow extends Window {
 		blankAuxheader
 				.setStyle("border: 0; border-style: none; border-width: 0;");
 		blankAuxheader.setParent(auxhead);
-		
+
 		Auxheader usernameAuxheader = new Auxheader();
 		usernameAuxheader.setParent(auxhead);
 		usernameSearchingTextbox = new Textbox();
@@ -240,43 +255,16 @@ public class UsersWindow extends Window {
 		usernameSearchingTextbox.setWidth("75%");
 		usernameSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				if (usernameSearchingTextbox.getValue().isEmpty()) {
-					refreshGrid();
-				} else {
-					Session sessionSelect = null;
-					try {
-						sessionSelect = hibernateUtil
-								.getSessionFactory().openSession();
-						Criteria criteria = sessionSelect
-								.createCriteria(Users.class);
-						criteria.add(Restrictions.like("username",
-								usernameSearchingTextbox.getValue() + "%"));
-						List<Users> users = criteria.list();
-						usersListModelList = new ListModelList<Users>(
-								users);
-						grid.setModel(usersListModelList);
-					} catch (Exception e) {
-						logger.error(e.getMessage(), e);
-
-					} finally {
-						if (sessionSelect != null) {
-							try {
-								sessionSelect.close();
-							} catch (Exception e) {
-								logger.error(e.getMessage(), e);
-							}
-						}
-
+					public void onEvent(Event namedSearchEvent) {
+						divisiSearchingTextbox.setValue("");
+						emailSearchingTextbox.setValue("");
+						refreshGrid();
 					}
-				}
-			}
-		});
+				});
 		Image searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(usernameAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
-		
+
 		Auxheader divisiAuxheader = new Auxheader();
 		divisiAuxheader.setParent(auxhead);
 		divisiSearchingTextbox = new Textbox();
@@ -284,40 +272,31 @@ public class UsersWindow extends Window {
 		divisiSearchingTextbox.setWidth("75%");
 		divisiSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				if (divisiSearchingTextbox.getValue().isEmpty()) {
-					refreshGrid();
-				} else {
-					Session sessionSelect = null;
-					try {
-						sessionSelect = hibernateUtil
-								.getSessionFactory().openSession();
-						Criteria criteria = sessionSelect
-								.createCriteria(Users.class);
-						criteria.add(Restrictions.like("divisi",
-								divisiSearchingTextbox.getValue() + "%"));
-						List<Users> users = criteria.list();
-						usersListModelList = new ListModelList<Users>(
-								users);
-						grid.setModel(usersListModelList);
-					} catch (Exception e) {
-						logger.error(e.getMessage(), e);
-						
-					} finally {
-						if (sessionSelect != null) {
-							try {
-								sessionSelect.close();
-							} catch (Exception e) {
-								logger.error(e.getMessage(), e);
-							}
-						}
-						
+					public void onEvent(Event namedSearchEvent) {
+						usernameSearchingTextbox.setValue("");
+						emailSearchingTextbox.setValue("");
+						refreshGrid();
 					}
-				}
+				});
+		searchImage = new Image("image/small_search_icon.png");
+		searchImage.setParent(divisiAuxheader);
+		searchImage.setStyle("margin: 0 0 0 6px");
+		
+		Auxheader emailAuxheader = new Auxheader();
+		emailAuxheader.setParent(auxhead);
+		emailSearchingTextbox = new Textbox();
+		emailSearchingTextbox.setParent(emailAuxheader);
+		emailSearchingTextbox.setWidth("75%");
+		emailSearchingTextbox.addEventListener(Events.ON_OK,
+				new EventListener<Event>() {
+			public void onEvent(Event namedSearchEvent) {
+				usernameSearchingTextbox.setValue("");
+				divisiSearchingTextbox.setValue("");
+				refreshGrid();
 			}
 		});
 		searchImage = new Image("image/small_search_icon.png");
-		searchImage.setParent(divisiAuxheader);
+		searchImage.setParent(emailAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
 
 		refreshGrid();
@@ -365,9 +344,10 @@ public class UsersWindow extends Window {
 									messageProcess.setValue("User editted");
 									Users userFromModal = usersFormWindow
 											.get_user();
-									((Label) editRow
-									.getChildren().get(4)).setValue(userFromModal
-											.getDivisi());
+									((Label) editRow.getChildren().get(4))
+											.setValue(userFromModal.getDivisi());
+									((Label) editRow.getChildren().get(5))
+									.setValue(userFromModal.getEmail());
 								}
 
 								updateEventButton.setDisabled(false);
@@ -435,9 +415,7 @@ public class UsersWindow extends Window {
 				deleteButton.setDisabled(true);
 			}
 			row.appendChild(deleteButton);
-			
-			
-			
+
 			ButtonCustom gearButtonCustom = new ButtonCustom("image/gear.png",
 					user);
 			gearButtonCustom.setParent(row);
@@ -447,21 +425,26 @@ public class UsersWindow extends Window {
 			gearButtonCustom.setWidth("40px");
 			gearButtonCustom.addEventListener(Events.ON_CLICK,
 					new EventListener<Event>() {
-				public void onEvent(Event gearEvent) {
-					ButtonCustom buttonSelected = (ButtonCustom) gearEvent.getTarget();
-					
-					Users userSelected = (Users) buttonSelected.getDataObject();
-					
-					QueryListForUSers queryListForUSers = new QueryListForUSers("User "+userSelected.getUsername()+" properties", userSelected);
-					queryListForUSers.setParent(singleWindow);
-					queryListForUSers.doModal();
-					
-					refreshGrid();
-				}
-			});
+						public void onEvent(Event gearEvent) {
+							ButtonCustom buttonSelected = (ButtonCustom) gearEvent
+									.getTarget();
+
+							Users userSelected = (Users) buttonSelected
+									.getDataObject();
+
+							QueryListForUSers queryListForUSers = new QueryListForUSers(
+									"User " + userSelected.getUsername()
+											+ " properties", userSelected);
+							queryListForUSers.setParent(singleWindow);
+							queryListForUSers.doModal();
+
+							refreshGrid();
+						}
+					});
 
 			row.appendChild(new Label(user.getUsername()));
 			row.appendChild(divisiLabel);
+			row.appendChild(new Label(user.getEmail()));
 			row.appendChild(new Label(serviceMain.convertStringFromDate(
 					"dd/MM/yyyy HH:mm", user.getLast_login())));
 		}
@@ -473,6 +456,17 @@ public class UsersWindow extends Window {
 		try {
 			sessionSelect = hibernateUtil.getSessionFactory().openSession();
 			Criteria criteria = sessionSelect.createCriteria(Users.class);
+			if (!divisiSearchingTextbox.getValue().isEmpty()) {
+				criteria.add(Restrictions.like("divisi",
+						divisiSearchingTextbox.getValue() + "%"));
+			} else if (!usernameSearchingTextbox.getValue().isEmpty()) {
+				criteria.add(Restrictions.like("username",
+						usernameSearchingTextbox.getValue() + "%"));
+			} else if (!emailSearchingTextbox.getValue().isEmpty()) {
+				criteria.add(Restrictions.like("email",
+						emailSearchingTextbox.getValue() + "%"));
+			}
+
 			List<Users> users = criteria.list();
 			usersListModelList = new ListModelList<Users>(users);
 			grid.setModel(usersListModelList);

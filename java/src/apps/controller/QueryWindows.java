@@ -29,7 +29,6 @@ import org.zkoss.zul.Rows;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Tree;
 import org.zkoss.zul.Treechildren;
-import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.West;
 import org.zkoss.zul.Window;
 
@@ -48,7 +47,6 @@ public class QueryWindows extends Window {
 
 	private ServiceMain serviceMain;
 	private CheckService checkService;
-	
 
 	private String _driverName;
 	private String _url;
@@ -67,9 +65,9 @@ public class QueryWindows extends Window {
 	public QueryWindows(String title, QueryData queryData) {
 		super(title, null, true);
 		queryWindow = this;
-		
+
 		checkService = new CheckService();
-		
+
 		serviceMain = new ServiceImplMain();
 		Borderlayout borderlayout = new Borderlayout();
 		borderlayout
@@ -145,14 +143,64 @@ public class QueryWindows extends Window {
 			public void onEvent(Event event) {
 				if (!saveQueryButton.isDisabled()) {
 					saveQueryButton.setDisabled(true);
-					if (textQuery.getValue().length() > 0) {
-						int dataSize = 0;
-						org.hibernate.Session session = null;
-						try {
-							session = hibernateUtil.getSessionFactory()
-									.openSession();
 
-							Criteria criteria = session
+					boolean canSaved = true;
+
+					org.hibernate.Session querySession = null;
+					try {
+						querySession = hibernateUtil.getSessionFactory()
+								.openSession();
+
+						if (_driverName == null || (_driverName.isEmpty())) {
+							Messagebox.show("Please choose Table on left",
+									"Information", Messagebox.OK,
+									Messagebox.INFORMATION);
+							canSaved = false;
+						} else if (_url == null || (_url.isEmpty())) {
+							Messagebox.show("Please choose Table on left",
+									"Information", Messagebox.OK,
+									Messagebox.INFORMATION);
+							canSaved = false;
+						} else if (textQuery.getValue().isEmpty()) {
+							textQuery.setFocus(true);
+							Messagebox.show("Enter query", "Information",
+									Messagebox.OK, Messagebox.INFORMATION);
+							canSaved = false;
+						} else {
+							Connection connection = null;
+							try {
+								connection = serviceMain.getConnection(
+										_driverName, _url);
+								connection.setAutoCommit(false);
+								PreparedStatement preparedStatement = connection
+										.prepareStatement(textQuery.getValue());
+								if (textQuery.getValue().trim().toLowerCase()
+										.startsWith("select")) {
+									preparedStatement.executeQuery();
+								} else {
+									preparedStatement.executeUpdate();
+								}
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+								Messagebox.show("Query syntax was wrong",
+										"Information", Messagebox.OK,
+										Messagebox.INFORMATION);
+								canSaved = false;
+							} finally {
+								if (connection != null) {
+									try {
+										connection.close();
+									} catch (Exception e) {
+										logger.error(e.getMessage(), e);
+									}
+								}
+
+							}
+						}
+
+						if (canSaved) {
+							int dataSize = 0;
+							Criteria criteria = querySession
 									.createCriteria(QueryData.class);
 							criteria.add(Restrictions.eq("sql",
 									textQuery.getValue()));
@@ -161,36 +209,19 @@ public class QueryWindows extends Window {
 										_queryData.getId()));
 							}
 							dataSize = criteria.list().size();
-						} catch (Exception e) {
-							logger.error(e.getMessage(), e);
-
-						} finally {
-							if (session != null) {
-								try {
-									session.close();
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-								}
-							}
-
-						}
-						if (dataSize > 0) {
-							Messagebox.show("This query already exist",
-									"Information", Messagebox.OK,
-									Messagebox.INFORMATION);
-						} else {
-							if (_queryData == null) {
-								QuerySavedWindow querySavedWindow = new QuerySavedWindow(
-										"Add query", _driverName, _url,
-										textQuery.getValue());
-								queryWindow.appendChild(querySavedWindow);
-								querySavedWindow.setWidth("400px");
-								querySavedWindow.doModal();
+							if (dataSize > 0) {
+								Messagebox.show("This query already exist",
+										"Information", Messagebox.OK,
+										Messagebox.INFORMATION);
 							} else {
-								org.hibernate.Session querySession = null;
-								try {
-									querySession = hibernateUtil
-											.getSessionFactory().openSession();
+								if (_queryData == null) {
+									QuerySavedWindow querySavedWindow = new QuerySavedWindow(
+											"Add query", _driverName, _url,
+											textQuery.getValue());
+									queryWindow.appendChild(querySavedWindow);
+									querySavedWindow.setWidth("400px");
+									querySavedWindow.doModal();
+								} else {
 									Transaction trx = querySession
 											.beginTransaction();
 
@@ -198,47 +229,45 @@ public class QueryWindows extends Window {
 											.getCurrent();
 									Users user = (Users) sessionLocal
 											.getAttribute("userlogin");
-									
-									Users userBefore = _queryData.getModifiedBy();
+
+									Users userBefore = _queryData
+											.getModifiedBy();
 
 									_queryData.setDriver(_driverName);
 									_queryData.setSql(textQuery.getValue());
 									_queryData.setConnectionString(_url);
 									_queryData.setModifiedBy(user);
-									_queryData.setModifiedAt(new java.sql.Timestamp(new Date().getTime()));
-									
+									_queryData
+											.setModifiedAt(new java.sql.Timestamp(
+													new Date().getTime()));
+
 									querySession.update(_queryData);
-									
+
 									user.setIsdeleted(false);
 									querySession.update(user);
 
 									trx.commit();
 									if (!userBefore.equals(user)) {
-										checkService.userIsDeleted( userBefore);
+										checkService.userIsDeleted(userBefore);
 									}
-									
-									
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-
-								} finally {
-									if (querySession != null) {
-										try {
-											querySession.close();
-										} catch (Exception e) {
-											logger.error(e.getMessage(), e);
-										}
-									}
+									queryWindow.detach();
 
 								}
-								queryWindow.detach();
 							}
 						}
 
-					} else {
-						textQuery.setFocus(true);
-						Messagebox.show("Enter query", "Information",
-								Messagebox.OK, Messagebox.INFORMATION);
+					} catch (Exception e) {
+						logger.error(e.getMessage(), e);
+
+					} finally {
+						if (querySession != null) {
+							try {
+								querySession.close();
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+							}
+						}
+
 					}
 
 					saveQueryButton.setDisabled(false);
@@ -314,6 +343,57 @@ public class QueryWindows extends Window {
 				TreeItemWithData treeitemDatabase = new TreeItemWithData(
 						databaseName + "  (" + databaseKind + ")");
 				treeitemDatabase.setImage("image/database-icon.png");
+				treeitemDatabase.set_databaseKind(databaseKind);
+				treeitemDatabase
+						.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+				treeitemDatabase.addEventListener(Events.ON_CLICK,
+						new EventListener<Event>() {
+							public void onEvent(Event treeItemEvent) {
+								TreeItemWithData treeItemSelectedData = (TreeItemWithData) treeItemEvent
+										.getTarget();
+								_driverName = serviceMain.getPropSetting(treeItemSelectedData
+										.get_databaseKind()
+										+ ".driver"
+										+ treeItemSelectedData
+												.get_indexDataSqlServerFinal());
+								_url = serviceMain.getPropSetting(treeItemSelectedData
+										.get_databaseKind()
+										+ ".url"
+										+ treeItemSelectedData
+												.get_indexDataSqlServerFinal());
+							}
+						});
+				
+				Menupopup databaseMenupopup = new Menupopup();
+				databaseMenupopup.setParent(queryWindow);
+				
+				MenuitemWithData databaseSelectData = new MenuitemWithData(
+						"Select this database");
+				databaseSelectData.setParent(databaseMenupopup);
+				databaseSelectData
+				.setImage("image/database-icon.png");
+				databaseSelectData.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+				databaseSelectData.set_databaseKind(databaseKind);
+				databaseSelectData.addEventListener(Events.ON_CLICK,
+						new EventListener<Event>() {
+					public void onEvent(Event databaseSelectEvent) {
+						MenuitemWithData menuitemWithData = (MenuitemWithData) databaseSelectEvent
+								.getTarget();
+						_driverName = serviceMain.getPropSetting(menuitemWithData
+								.get_databaseKind()
+								+ ".driver"
+								+ menuitemWithData
+										.get_indexDataSqlServerFinal());
+						_url = serviceMain.getPropSetting(menuitemWithData
+								.get_databaseKind()
+								+ ".url"
+								+ menuitemWithData
+										.get_indexDataSqlServerFinal());
+					}
+				});
+				
+				treeitemDatabase.setContext(databaseMenupopup);
+				
 				Connection connection = null;
 				ResultSet resultSetTable = null;
 				try {
@@ -530,6 +610,7 @@ public class QueryWindows extends Window {
 												Event treeitemTableEvent) {
 											TreeItemWithData treeItemWithData = (TreeItemWithData) treeitemTableEvent
 													.getTarget();
+											treeItemWithData.setSelected(true);
 											setSelectResult(
 													treeItemWithData
 															.get_querySelectFinal(),
@@ -545,6 +626,8 @@ public class QueryWindows extends Window {
 																	.get_indexDataSqlServerFinal()));
 										}
 									});
+							
+							
 
 							Menupopup menupopupItemTable = new Menupopup();
 							MenuitemWithData menuitemPopupItemTableSelect = new MenuitemWithData(

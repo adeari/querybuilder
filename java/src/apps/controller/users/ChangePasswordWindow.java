@@ -1,4 +1,4 @@
-package apps.controller;
+package apps.controller.users;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
@@ -37,7 +37,7 @@ public class ChangePasswordWindow extends Window {
 	private Button saveButton;
 
 	public ChangePasswordWindow(String title) {
-		super("Change password", null, true);
+		super(title, null, true);
 		serviceMain = new ServiceImplMain();
 
 		changePasswordWindow = this;
@@ -148,38 +148,41 @@ public class ChangePasswordWindow extends Window {
 							if (canSave) {
 								org.hibernate.Session session = null;
 								try {
-								session = hibernateUtil
-										.getSessionFactory().openSession();
-								
-								Criteria citeria = session
-										.createCriteria(Users.class);
-								citeria.add(Restrictions.eq("id", user.getId()));
-								
-								
-								Users userUpdate = (Users) citeria.uniqueResult();
+									session = hibernateUtil.getSessionFactory()
+											.openSession();
 
-								Transaction trx = session.beginTransaction();
-								userUpdate.setPass(serviceMain
-										.convertPass(passwordTextbox.getValue()));
+									Criteria citeria = session
+											.createCriteria(Users.class);
+									citeria.add(Restrictions.eq("id",
+											user.getId()));
 
-								session.update(userUpdate);
+									Users userUpdate = (Users) citeria
+											.uniqueResult();
 
-								trx.commit();
-								
+									Transaction trx = session
+											.beginTransaction();
+									userUpdate.setPass(serviceMain
+											.convertPass(passwordTextbox
+													.getValue()));
+
+									session.update(userUpdate);
+
+									trx.commit();
+									detach();
 								} catch (Exception e) {
 									logger.error(e.getMessage(), e);
-									
+
 								} finally {
 									if (session != null) {
 										try {
 											session.close();
 										} catch (Exception e) {
 											logger.error(e.getMessage(), e);
-										} 
+										}
 									}
-									
+
 								}
-								detach();
+
 							}
 
 							saveButton.setDisabled(false);

@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -91,76 +92,104 @@ public class ServiceImplMain implements ServiceMain {
 	}
 
 	public Component getResultGrid(String sql, String driverName, String url) {
-
+		if (driverName == null || (driverName.isEmpty()) ) {
+			Label labelResult = new Label("Select database on left first");
+			return labelResult;
+		}
+		if (url == null || (url.isEmpty()) ) {
+			Label labelResult = new Label("Select database on left first");
+			return labelResult;
+		}
+		String messageHandle = "Data empty";
+		
+		Connection connection = null;
 		try {
-			Connection connection = getConnection(driverName, url);
+			connection = getConnection(driverName, url);
 			sql = sql.trim();
 			PreparedStatement preparedStatement = connection
 					.prepareStatement(sql);
 
 			if (sql.toUpperCase().trim().startsWith("SELECT")) {
-				ResultSet resultSet = preparedStatement.executeQuery();
-				if (resultSet.next()) {
+				ResultSet resultSet = null;
+				
+				try {
 					resultSet = preparedStatement.executeQuery();
-					Grid gridResult = new Grid();
-					gridResult.setSizedByContent(true);
-					gridResult.setVflex(true);
-					gridResult.setAutopaging(true);
-					gridResult.setMold("paging");
-					gridResult.setHeight("360px");
-					Columns columnsGridResult = new Columns();
-					columnsGridResult.setSizable(true);
+					
+					if (resultSet.next()) {
+						resultSet = preparedStatement.executeQuery();
+						Grid gridResult = new Grid();
+						gridResult.setSizedByContent(true);
+						gridResult.setVflex(true);
+						gridResult.setAutopaging(true);
+						gridResult.setMold("paging");
+						gridResult.setHeight("360px");
+						Columns columnsGridResult = new Columns();
+						columnsGridResult.setSizable(true);
 
-					ResultSetMetaData resultSetMetaData = resultSet
-							.getMetaData();
-					for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-						Column column = new Column(resultSetMetaData
-								.getColumnName(i).toUpperCase());
-						column.setParent(columnsGridResult);
-					}
-					columnsGridResult.setParent(gridResult);
-
-					Rows rowsResult = new Rows();
-					rowsResult.setStyle("overflow: scroll;");
-
-					while (resultSet.next()) {
-						Row rowResult = new Row();
+						ResultSetMetaData resultSetMetaData = resultSet
+								.getMetaData();
 						for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-							Label labelResult = null;
-
-							if (Arrays.asList(columnTypeDate).contains(
-									resultSetMetaData.getColumnClassName(i))) {
-								try {
-									labelResult = new Label(resultSet
-											.getTimestamp(
-													resultSetMetaData
-															.getColumnName(i))
-											.toString());
-								} catch (Exception ex) {
-									labelResult = new Label("0000-00-00 00:00");
-								}
-							} else {
-								labelResult = new Label(
-										resultSet.getString(resultSetMetaData
-												.getColumnName(i)));
-							}
-
-							rowResult.appendChild(labelResult);
+							Column column = new Column(resultSetMetaData
+									.getColumnName(i).toUpperCase());
+							column.setParent(columnsGridResult);
 						}
-						rowResult.setParent(rowsResult);
-					}
-					rowsResult.setParent(gridResult);
+						columnsGridResult.setParent(gridResult);
 
-					resultSet.close();
-					connection.close();
-					return (Component) gridResult;
-				} else {
-					Label labelResult = new Label("Data empty");
-					return labelResult;
+						Rows rowsResult = new Rows();
+						rowsResult.setStyle("overflow: scroll;");
+
+						while (resultSet.next()) {
+							Row rowResult = new Row();
+							for (int i = 1; i <= resultSetMetaData
+									.getColumnCount(); i++) {
+								Label labelResult = null;
+
+								if (Arrays.asList(columnTypeDate)
+										.contains(
+												resultSetMetaData
+														.getColumnClassName(i))) {
+									try {
+										labelResult = new Label(
+												resultSet
+														.getTimestamp(
+																resultSetMetaData
+																		.getColumnName(i))
+														.toString());
+									} catch (Exception ex) {
+										labelResult = new Label(
+												"0000-00-00 00:00");
+									}
+								} else {
+									labelResult = new Label(
+											resultSet
+													.getString(resultSetMetaData
+															.getColumnName(i)));
+								}
+
+								rowResult.appendChild(labelResult);
+							}
+							rowResult.setParent(rowsResult);
+						}
+						rowsResult.setParent(gridResult);
+
+						return (Component) gridResult;
+					} else {
+						Label labelResult = new Label(messageHandle);
+						return labelResult;
+					}
+				} catch (Exception e) {
+					messageHandle = e.getMessage();
+					logger.error(messageHandle, e);
+				} finally {
+					if (resultSet != null) {
+						resultSet.close();
+					}
 				}
+				Label labelResult = new Label(messageHandle);
+				return labelResult;
 			} else if (sql.toUpperCase().trim().startsWith("DELETE")) {
 				if (Messagebox.show("Are you sure to delete data", "Important",
-							Messagebox.YES | Messagebox.NO, Messagebox.QUESTION) == Messagebox.YES) {
+						Messagebox.YES | Messagebox.NO, Messagebox.QUESTION) == Messagebox.YES) {
 					preparedStatement.executeUpdate();
 					Label labelResult = new Label("Process Done");
 					return labelResult;
@@ -174,10 +203,19 @@ public class ServiceImplMain implements ServiceMain {
 				return labelResult;
 			}
 		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
-			Label labelResult = new Label("Error " + ex.getMessage());
-			return labelResult;
+			messageHandle = ex.getMessage();
+			logger.error(messageHandle, ex);
+		} finally {
+			if (connection != null) {
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					logger.error(e.getMessage(), e);
+				}
+			}
 		}
+		Label labelResult = new Label(messageHandle);
+		return labelResult;
 	}
 
 	public String getValueColumn(String columnName, String columnType,
@@ -246,12 +284,12 @@ public class ServiceImplMain implements ServiceMain {
 					sessionSelect.close();
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
-				} 
+				}
 			}
 		}
 		return user;
 	}
-	
+
 	public Timestamp convertToTimeStamp(String format, String date) {
 		if (date == null || (date.isEmpty())) {
 			return null;
