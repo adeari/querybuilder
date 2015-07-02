@@ -128,6 +128,7 @@ public class UserListForQueryList extends Window {
 
 		userListbox = new Listbox();
 		userListbox.setParent(vlayout);
+		userListbox.setMold("paging");
 		userListbox.setAutopaging(true);
 		userListbox.setHeight("400px");
 		userListbox.setCheckmark(true);

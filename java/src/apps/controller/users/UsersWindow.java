@@ -302,9 +302,8 @@ public class UsersWindow extends Window {
 		refreshGrid();
 
 		grid.setRowRenderer(new MyRowRenderer());
-
-		grid.setAutopaging(true);
 		grid.setMold("paging");
+		grid.setAutopaging(true);
 		grid.setHeight("520px");
 
 		vlayout.appendChild(grid);

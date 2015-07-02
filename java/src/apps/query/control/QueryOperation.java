@@ -51,6 +51,7 @@ public class QueryOperation extends Window {
 
 		listbox = new Listbox();
 		listbox.setHeight("600px");
+		listbox.setMold("paging");
 		listbox.setAutopaging(true);
 		listbox.setMultiple(false);
 		listbox.setEmptyMessage("Query empty");

@@ -120,8 +120,8 @@ public class ServiceImplMain implements ServiceMain {
 						Grid gridResult = new Grid();
 						gridResult.setSizedByContent(true);
 						gridResult.setVflex(true);
-						gridResult.setAutopaging(true);
 						gridResult.setMold("paging");
+						gridResult.setAutopaging(true);
 						gridResult.setHeight("360px");
 						Columns columnsGridResult = new Columns();
 						columnsGridResult.setSizable(true);
@@ -138,7 +138,8 @@ public class ServiceImplMain implements ServiceMain {
 						Rows rowsResult = new Rows();
 						rowsResult.setStyle("overflow: scroll;");
 
-						while (resultSet.next()) {
+						int rowIndex = 0;
+						while (resultSet.next() && rowIndex < 500) {
 							Row rowResult = new Row();
 							for (int i = 1; i <= resultSetMetaData
 									.getColumnCount(); i++) {
@@ -169,6 +170,7 @@ public class ServiceImplMain implements ServiceMain {
 								rowResult.appendChild(labelResult);
 							}
 							rowResult.setParent(rowsResult);
+							rowIndex++;
 						}
 						rowsResult.setParent(gridResult);
 

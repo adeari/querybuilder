@@ -6,8 +6,9 @@ public class TreeItemWithData extends Treeitem {
 	private static final long serialVersionUID = -1459659850739422778L;
 	private String _dataPut;
 	private String _querySelectFinal;
-	private String _databaseKind;
-	private Integer _indexDataSqlServerFinal;
+	private String driverName;
+	private String urlData;
+	
 	
 	public TreeItemWithData() {
 		
@@ -40,21 +41,22 @@ public class TreeItemWithData extends Treeitem {
 		this._querySelectFinal = _querySelectFinal;
 	}
 
-	public Integer get_indexDataSqlServerFinal() {
-		return _indexDataSqlServerFinal;
+	public String getDriverName() {
+		return driverName;
 	}
 
-	public void set_indexDataSqlServerFinal(Integer _indexDataSqlServerFinal) {
-		this._indexDataSqlServerFinal = _indexDataSqlServerFinal;
+	public void setDriverName(String driverName) {
+		this.driverName = driverName;
 	}
 
-	public String get_databaseKind() {
-		return _databaseKind;
+	public String getUrlData() {
+		return urlData;
 	}
 
-	public void set_databaseKind(String _databaseKind) {
-		this._databaseKind = _databaseKind;
+	public void setUrlData(String urlData) {
+		this.urlData = urlData;
 	}
+
 	
 	
 }

@@ -7,8 +7,8 @@ public class MenuitemWithData extends Menuitem {
 	private static final long serialVersionUID = 3214948044009148026L;
 	private String _data;
 	private String _querySelectFinal;
-	private String _databaseKind;
-	private Integer _indexDataSqlServerFinal;
+	private String driverName;
+	private String urlData;
 	
 	public MenuitemWithData() {
 		
@@ -33,21 +33,19 @@ public class MenuitemWithData extends Menuitem {
 		this._querySelectFinal = _querySelectFinal;
 	}
 
-	public String get_databaseKind() {
-		return _databaseKind;
+	public String getDriverName() {
+		return driverName;
 	}
 
-	public void set_databaseKind(String _databaseKind) {
-		this._databaseKind = _databaseKind;
+	public void setDriverName(String driverName) {
+		this.driverName = driverName;
 	}
 
-	public Integer get_indexDataSqlServerFinal() {
-		return _indexDataSqlServerFinal;
+	public String getUrlData() {
+		return urlData;
 	}
 
-	public void set_indexDataSqlServerFinal(Integer _indexDataSqlServerFinal) {
-		this._indexDataSqlServerFinal = _indexDataSqlServerFinal;
+	public void setUrlData(String urlData) {
+		this.urlData = urlData;
 	}
-
-	
 }

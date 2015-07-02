@@ -19,6 +19,7 @@ import java.util.Random;
 
 import org.apache.log4j.Logger;
 
+import apps.beans.AdvancedObject;
 import apps.timer.TimerMain;
 
 public class ServiceMain {
@@ -35,6 +36,20 @@ public class ServiceMain {
 				+ " MB, Total Memory:" + (runtime.totalMemory() / mb)
 				+ " MB, Max Memory:" + (runtime.maxMemory() / mb) + " MB");
 
+	}
+	
+	public long getMemoryUsed() {
+		Runtime runtime = Runtime.getRuntime();
+		return Long.valueOf(runtime.totalMemory() - runtime.freeMemory()).longValue();
+	}
+	public long getMemoryMax() {
+		Runtime runtime = Runtime.getRuntime();
+		return Long.valueOf(runtime.maxMemory()).longValue();
+	}
+	
+	public String getMemoryShow(long memorySized) {
+		return (memorySized / mb)
+				+ " MB";
 	}
 
 	public String getPropSetting(String key) {
@@ -122,6 +137,63 @@ public class ServiceMain {
 
 		return fileName;
 	}
+	
+	public String downloadlink() {
+		String downloadLink = null;
+		boolean isDownloadLink = true;
+		do {
+			downloadLink = randomString(200);
+			Connection connection = null;
+			try {
+				Class.forName(getPropSetting("database.driver")).newInstance();
+				connection = DriverManager
+						.getConnection(getPropSetting("database.url"));
+
+				PreparedStatement preparedStatement = connection
+						.prepareStatement("SELECT COUNT(*) as counti from tb_file where download_link = '"
+								+ downloadLink + "'");
+
+				ResultSet resultSet = null;
+				try {
+					resultSet = preparedStatement.executeQuery();
+
+					if (resultSet.next()) {
+						if (resultSet.getString("counti") == null
+								|| (resultSet.getLong("counti") == 0)) {
+							isDownloadLink = false;
+						}
+					} else {
+						isDownloadLink = false;
+					}
+
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
+				} finally {
+					if (resultSet != null) {
+						try {
+							resultSet.close();
+						} catch (SQLException e) {
+							logger.error(" on Close" + e.getMessage(), e);
+						}
+					}
+				}
+
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			} finally {
+				if (connection != null) {
+					try {
+						connection.close();
+					} catch (SQLException e) {
+						logger.error(" on Close" + e.getMessage(), e);
+					}
+				}
+			}
+
+		} while (isDownloadLink);
+
+		return downloadLink;
+	}
 
 	public String readableFileSize(long size) {
 		if (size <= 0)
@@ -134,37 +206,70 @@ public class ServiceMain {
 	}
 
 	public void updateActivity(long activityID, 
-			File fileCheck, String fileType, String notes) {
+			File fileCheck, String fileType, String notes, AdvancedObject advancedObject) {
 		Connection connection = null;
 		try {
 			Class.forName(getPropSetting("database.driver")).newInstance();
 			connection = DriverManager.getConnection(getPropSetting("database.url"));
 			if (fileCheck == null) {
 				PreparedStatement preparedStatement = connection
-						.prepareStatement("UPDATE tb_activity SET done_at = ?, notes = ? WHERE id = ?");
-				preparedStatement.setTimestamp(1, new Timestamp(new Date().getTime()));
+						.prepareStatement("UPDATE tb_activity SET done_at = ?, notes = ?, start_at = ?, "
+								+ "memory_used = ?, memory_max = ?, show_memory_used = ?, show_memory_max = ?  WHERE id = "+activityID);
+				Date doneDate = new Date();
+				preparedStatement.setTimestamp(1, new Timestamp(doneDate.getTime()));
 				preparedStatement.setString(2, notes);
-				preparedStatement.setLong(3, activityID);
+				preparedStatement.setTimestamp(3, new Timestamp(advancedObject.getStartAt().getTime()));
+				preparedStatement.setLong(4, advancedObject.getMemoryUsed());
+				preparedStatement.setLong(5, advancedObject.getMemoryMax());
+				preparedStatement.setString(6, getMemoryShow(advancedObject.getMemoryUsed()));
+				preparedStatement.setString(7, getMemoryShow(advancedObject.getMemoryMax()));
+				
+				long diff = doneDate.getTime() - advancedObject.getStartAt().getTime();
+				 
+				long diffSeconds = diff / 1000 % 60;
+				long diffMinutes = diff / (60 * 1000) % 60;
+				long diffHours = diff / (60 * 60 * 1000) % 24;
+				long diffDays = diff / (24 * 60 * 60 * 1000);
+				
+				String showTime = "";
+				String diffTime = "";
+				if (diffDays > 0) {
+					showTime = ""+ diffDays;
+					diffTime += showTime;
+					if (showTime.length() > 1) {
+						diffTime = "0"+diffTime;
+					}
+					if (diffDays == 1) {
+						showTime += " day";
+					} else {
+						showTime += " days";
+					}
+				}
+				
 				preparedStatement.executeUpdate();
 				
 				preparedStatement.executeUpdate();
 			} else {
 				PreparedStatement preparedStatement = connection
-						.prepareStatement("INSERT INTO tb_file (filename, filetype, isdeleted, filesize, filesize_show) "
-								+ "VALUES (?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+						.prepareStatement("INSERT INTO tb_file (filename, filetype, isdeleted, filesize, filesize_show, download_link) "
+								+ "VALUES (?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 				preparedStatement.setString(1, fileCheck.getName());
 				preparedStatement.setString(2, fileType);
 				preparedStatement.setBoolean(3, false);
 				preparedStatement.setLong(4, fileCheck.length());
 				preparedStatement.setString(5, readableFileSize(fileCheck.length()));
+				preparedStatement.setString(6, downloadlink());
 				preparedStatement.executeUpdate();
 				ResultSet resultSet = preparedStatement.getGeneratedKeys();
 				if (resultSet.next()) {
 					preparedStatement = connection
-							.prepareStatement("UPDATE tb_activity SET done_at = ?, file_id=? WHERE id = ?");
+							.prepareStatement("UPDATE tb_activity SET done_at = ?, file_id=?, start_at = ?, "
+									+ "memory_used = ?, memory_max = ?, show_memory_used = ?, show_memory_max = ? WHERE id = "+activityID);
 					preparedStatement.setTimestamp(1, new Timestamp(new Date().getTime()));
 					preparedStatement.setLong(2, resultSet.getLong(1));
-					preparedStatement.setLong(3, activityID);
+					preparedStatement.setTimestamp(3, new Timestamp(advancedObject.getStartAt().getTime()));
+					preparedStatement.setLong(4, advancedObject.getMemoryUsed());
+					preparedStatement.setLong(5, advancedObject.getMemoryMax());
 					preparedStatement.executeUpdate();
 				}
 			}

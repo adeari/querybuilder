@@ -1,5 +1,7 @@
 package apps.controller;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -16,6 +18,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
 import org.zkoss.zul.Div;
+import org.zkoss.zul.Filedownload;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
@@ -34,6 +37,7 @@ import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
+import apps.components.ButtonCustom;
 import apps.controller.queryy.QueryListWindow;
 import apps.controller.users.ChangePasswordWindow;
 import apps.controller.users.ProfileWindow;
@@ -221,7 +225,7 @@ public class MenuWindow extends Window {
 
 		logoutMenuitem = new Menuitem("Logout");
 		logoutMenuitem.setParent(mainMenupopup);
-		logoutMenuitem.setImage("image/logout.jpg");
+		logoutMenuitem.setImage("image/logout.png");
 		logoutMenuitem.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
 					public void onEvent(Event event) {
@@ -320,6 +324,7 @@ public class MenuWindow extends Window {
 		
 		activityListbox = new Listbox();
 		activityListbox.setParent(vlayout);
+		activityListbox.setMold("paging");
 		activityListbox.setAutopaging(true);
 		activityListbox.setEmptyMessage("No actifity");
 		activityListbox.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%;");
@@ -352,14 +357,11 @@ public class MenuWindow extends Window {
 		
 		Listheader downloadListheader = new Listheader("Download");
 		downloadListheader.setParent(listhead);
+		downloadListheader.setStyle("text-align: center;");
 		
 		Listheader fileSizeListheader = new Listheader("File size");
 		fileSizeListheader.setParent(listhead);
-		
-		
-		
-		
-		
+		fileSizeListheader.setStyle("text-align: right; padding: 0 25px 0 0;");
 		
 		settingForLoginUser();
 	}
@@ -443,24 +445,45 @@ public class MenuWindow extends Window {
 	public class ActivityItemRenderer implements ListitemRenderer<Activity> {
 
 		@Override
-		public void render(Listitem item, Activity data, int index)
+		public void render(Listitem listitem, Activity activity, int index)
 				throws Exception {
-			item.appendChild(new Listcell(data.getQueryName()));
-			String query = data.getQuery();
+			listitem.appendChild(new Listcell(activity.getQueryName()));
+			String query = activity.getQuery();
 			if (query.length() > 100) {
 				query = query.substring(0, 100);
 			}
-			item.appendChild(new Listcell(query));
-			item.appendChild(new Listcell(data.getFiletype()));
-			item.appendChild(new Listcell(serviceMain.convertStringFromDate("dd/MM/yyyy HH:mm", data.getCreatedAt())));
-			if (data.getDoneAt() == null) {
+			listitem.appendChild(new Listcell(query));
+			listitem.appendChild(new Listcell(activity.getFiletype()));
+			listitem.appendChild(new Listcell(serviceMain.convertStringFromDate("dd/MM/yyyy HH:mm", activity.getCreatedAt())));
+			if (activity.getDoneAt() == null) {
 				Listcell listcell = new Listcell("Process...");
 				listcell.setSpan(3);
-				listcell.setParent(item);
+				listcell.setParent(listitem);
 			} else {
-				item.appendChild(new Listcell(serviceMain.convertStringFromDate("dd/MM/yyyy HH:mm", data.getDoneAt())));
-				item.appendChild(new Listcell(data.getFileData().getFilename()));
-				item.appendChild(new Listcell(data.getFileData().getFilesizeToShow()));
+				listitem.appendChild(new Listcell(serviceMain.convertStringFromDate("dd/MM/yyyy HH:mm", activity.getDoneAt())));
+				Listcell downloadListcell = new Listcell();
+				downloadListcell.setParent(listitem);
+				downloadListcell.setStyle("text-align: center;");
+				ButtonCustom downloadButtonCustom = new ButtonCustom("image/download.png", activity);
+				downloadButtonCustom.addEventListener(Events.ON_CLICK,
+						new EventListener<Event>() {
+							public void onEvent(Event downloadEvent) {
+								ButtonCustom buttonSelectedButtonCustom = (ButtonCustom) downloadEvent.getTarget();
+								Activity activitySelected = (Activity) buttonSelectedButtonCustom.getDataObject();
+								File file = new File(serviceMain.getQuery("location.csv")+"/"+activitySelected.getFileData().getFilename());
+								try {
+									Filedownload.save(file, activitySelected.getFiletype());
+								} catch (FileNotFoundException e) {
+									logger.error(e.getMessage(), e);
+								}
+							}});
+				downloadButtonCustom.setParent(downloadListcell);
+				
+				
+				Listcell fileSizeListcell = new Listcell(activity.getFileData().getFilesizeToShow());
+				fileSizeListcell.setParent(listitem);
+				fileSizeListcell.setStyle("text-align: right; padding: 0 25px 0 0;");
+				
 			}
 		}
 		

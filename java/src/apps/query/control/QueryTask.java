@@ -98,7 +98,7 @@ public class QueryTask extends Window {
 			fileTypeLabel.setStyle("boder: 0");
 			fileTypeSelectbox = new Selectbox();
 			fileTypeSelectbox.setParent(fileTypeRow);
-			String[] fileTypeList = new String[] { "CSV", "Excel", "PDF" };
+			String[] fileTypeList = new String[] { "CSV",  "Excel", "PDF", "Text" };
 			ListModelList<String> fileTypeListModelList = new ListModelList<String>(
 					fileTypeList);
 			ListModel<String> fileTypeListModel = fileTypeListModelList;

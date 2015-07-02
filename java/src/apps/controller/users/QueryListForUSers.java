@@ -86,6 +86,7 @@ public class QueryListForUSers extends Window {
 		listbox = new Listbox();
 		listbox.setParent(window);
 		listbox.setHeight("500px");
+		listbox.setMold("paging");
 		listbox.setAutopaging(true);
 		listbox.setCheckmark(true);
 		listbox.setItemRenderer(new MyItemRenderer());

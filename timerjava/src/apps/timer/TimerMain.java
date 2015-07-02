@@ -11,6 +11,8 @@ import java.util.TimerTask;
 import org.apache.log4j.Logger;
 
 import apps.filehelper.CSVHelper;
+import apps.filehelper.ExcelHelper;
+import apps.filehelper.PdfHelper;
 import apps.service.ServiceMain;
 
 public class TimerMain {
@@ -54,10 +56,16 @@ public class TimerMain {
 					while (resultSet.next()) {
 						if (resultSet.getString("filetype").equalsIgnoreCase(
 								"CSV")) {
-							new CSVHelper(resultSet.getLong("id"),
-									resultSet.getString("query"),
-									resultSet.getString("driver"),
-									resultSet.getString("connection_string"));
+							new CSVHelper(resultSet, "csv");
+						} else if (resultSet.getString("filetype").equalsIgnoreCase(
+								"Excel")) {
+							new ExcelHelper(resultSet);
+						} else if (resultSet.getString("filetype").equalsIgnoreCase(
+								"PDF")) {
+							new PdfHelper(resultSet);
+						} else if (resultSet.getString("filetype").equalsIgnoreCase(
+								"Text")) {
+							new CSVHelper(resultSet, "txt");
 						}
 					}
 

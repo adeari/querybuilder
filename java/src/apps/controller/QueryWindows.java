@@ -337,71 +337,54 @@ public class QueryWindows extends Window {
 					+ indexDataSqlServer) == null) {
 				hasConnectionSQLServer = false;
 			} else {
-				int indexDataSqlServerFinal = indexDataSqlServer;
 				String databaseName = serviceMain.getPropSetting(databaseKind
 						+ ".name" + indexDataSqlServer);
+				String databaseDriver = serviceMain.getPropSetting(databaseKind
+						+ ".driver" + indexDataSqlServer);
+				String databaseUrl = serviceMain.getPropSetting(databaseKind
+						+ ".url" + indexDataSqlServer);
 				TreeItemWithData treeitemDatabase = new TreeItemWithData(
 						databaseName + "  (" + databaseKind + ")");
 				treeitemDatabase.setImage("image/database-icon.png");
-				treeitemDatabase.set_databaseKind(databaseKind);
-				treeitemDatabase
-						.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+				treeitemDatabase.setDriverName(databaseDriver);
+				treeitemDatabase.setUrlData(databaseUrl);
 				treeitemDatabase.addEventListener(Events.ON_CLICK,
 						new EventListener<Event>() {
 							public void onEvent(Event treeItemEvent) {
 								TreeItemWithData treeItemSelectedData = (TreeItemWithData) treeItemEvent
 										.getTarget();
-								_driverName = serviceMain.getPropSetting(treeItemSelectedData
-										.get_databaseKind()
-										+ ".driver"
-										+ treeItemSelectedData
-												.get_indexDataSqlServerFinal());
-								_url = serviceMain.getPropSetting(treeItemSelectedData
-										.get_databaseKind()
-										+ ".url"
-										+ treeItemSelectedData
-												.get_indexDataSqlServerFinal());
+								_driverName = treeItemSelectedData
+										.getDriverName();
+								_url = treeItemSelectedData.getUrlData();
 							}
 						});
-				
+
 				Menupopup databaseMenupopup = new Menupopup();
 				databaseMenupopup.setParent(queryWindow);
-				
+
 				MenuitemWithData databaseSelectData = new MenuitemWithData(
 						"Select this database");
 				databaseSelectData.setParent(databaseMenupopup);
-				databaseSelectData
-				.setImage("image/database-icon.png");
-				databaseSelectData.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
-				databaseSelectData.set_databaseKind(databaseKind);
+				databaseSelectData.setImage("image/database-icon.png");
+				databaseSelectData.setDriverName(databaseDriver);
+				databaseSelectData.setUrlData(databaseUrl);
 				databaseSelectData.addEventListener(Events.ON_CLICK,
 						new EventListener<Event>() {
-					public void onEvent(Event databaseSelectEvent) {
-						MenuitemWithData menuitemWithData = (MenuitemWithData) databaseSelectEvent
-								.getTarget();
-						_driverName = serviceMain.getPropSetting(menuitemWithData
-								.get_databaseKind()
-								+ ".driver"
-								+ menuitemWithData
-										.get_indexDataSqlServerFinal());
-						_url = serviceMain.getPropSetting(menuitemWithData
-								.get_databaseKind()
-								+ ".url"
-								+ menuitemWithData
-										.get_indexDataSqlServerFinal());
-					}
-				});
-				
+							public void onEvent(Event databaseSelectEvent) {
+								MenuitemWithData menuitemWithData = (MenuitemWithData) databaseSelectEvent
+										.getTarget();
+								_driverName = menuitemWithData.getDriverName();
+								_url = menuitemWithData.getUrlData();
+							}
+						});
+
 				treeitemDatabase.setContext(databaseMenupopup);
-				
+
 				Connection connection = null;
 				ResultSet resultSetTable = null;
 				try {
-					connection = serviceMain.getConnection(
-							serviceMain.getPropSetting(databaseKind + ".driver"
-									+ indexDataSqlServer),
-							serviceMain.getPropSetting(databaseKind + ".url"
-									+ indexDataSqlServer));
+					connection = serviceMain.getConnection(databaseDriver,
+							databaseUrl);
 
 					PreparedStatement preparedStatement = connection
 							.prepareStatement(serviceMain.getQuery(databaseKind
@@ -600,10 +583,8 @@ public class QueryWindows extends Window {
 
 							treeitemTable
 									.set_querySelectFinal(querySelectFinal);
-							treeitemTable.set_databaseKind(databaseKind);
-							treeitemTable
-									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
-
+							treeitemTable.setDriverName(databaseDriver);
+							treeitemTable.setUrlData(databaseUrl);
 							treeitemTable.addEventListener("onDoubleClick",
 									new EventListener<Event>() {
 										public void onEvent(
@@ -611,23 +592,14 @@ public class QueryWindows extends Window {
 											TreeItemWithData treeItemWithData = (TreeItemWithData) treeitemTableEvent
 													.getTarget();
 											treeItemWithData.setSelected(true);
-											setSelectResult(
+											setSelectResult(treeItemWithData
+													.get_querySelectFinal(),
 													treeItemWithData
-															.get_querySelectFinal(),
-													serviceMain.getPropSetting(treeItemWithData
-															.get_databaseKind()
-															+ ".driver"
-															+ treeItemWithData
-																	.get_indexDataSqlServerFinal()),
-													serviceMain.getPropSetting(treeItemWithData
-															.get_databaseKind()
-															+ ".url"
-															+ treeItemWithData
-																	.get_indexDataSqlServerFinal()));
+															.getDriverName(),
+													treeItemWithData
+															.getUrlData());
 										}
 									});
-							
-							
 
 							Menupopup menupopupItemTable = new Menupopup();
 							MenuitemWithData menuitemPopupItemTableSelect = new MenuitemWithData(
@@ -638,29 +610,21 @@ public class QueryWindows extends Window {
 							menuitemPopupItemTableSelect
 									.set_querySelectFinal(querySelectFinal);
 							menuitemPopupItemTableSelect
-									.set_databaseKind(databaseKind);
+									.setDriverName(databaseDriver);
 							menuitemPopupItemTableSelect
-									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
-
+									.setUrlData(databaseUrl);
 							menuitemPopupItemTableSelect.addEventListener(
 									"onClick", new EventListener<Event>() {
 										public void onEvent(
 												Event menuitemWithDataEvent) {
 											MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemWithDataEvent
 													.getTarget();
-											setSelectResult(
+											setSelectResult(menuitemWithData
+													.get_querySelectFinal(),
 													menuitemWithData
-															.get_querySelectFinal(),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".driver"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".url"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()));
+															.getDriverName(),
+													menuitemWithData
+															.getUrlData());
 										}
 									});
 							menuitemPopupItemTableSelect
@@ -672,28 +636,20 @@ public class QueryWindows extends Window {
 							select300ItemTableMenuitem
 									.set_querySelectFinal(querySelect300Final);
 							select300ItemTableMenuitem
-									.set_databaseKind(databaseKind);
-							select300ItemTableMenuitem
-									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+									.setDriverName(databaseDriver);
+							select300ItemTableMenuitem.setUrlData(databaseUrl);
 							select300ItemTableMenuitem.addEventListener(
 									"onClick", new EventListener<Event>() {
 										public void onEvent(
 												Event select300ItemTableMenuitemEvent) {
 											MenuitemWithData menuitemWithData = (MenuitemWithData) select300ItemTableMenuitemEvent
 													.getTarget();
-											setSelectResult(
+											setSelectResult(menuitemWithData
+													.get_querySelectFinal(),
 													menuitemWithData
-															.get_querySelectFinal(),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".driver"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".url"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()));
+															.getDriverName(),
+													menuitemWithData
+															.getUrlData());
 										}
 									});
 							select300ItemTableMenuitem
@@ -705,9 +661,9 @@ public class QueryWindows extends Window {
 							menuitemPopupItemTableInsert
 									.set_querySelectFinal(queryInsert);
 							menuitemPopupItemTableInsert
-									.set_databaseKind(databaseKind);
+									.setDriverName(databaseDriver);
 							menuitemPopupItemTableInsert
-									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+									.setUrlData(databaseUrl);
 
 							menuitemPopupItemTableInsert.addEventListener(
 									"onClick", new EventListener<Event>() {
@@ -715,19 +671,12 @@ public class QueryWindows extends Window {
 												Event menuitemPopupItemTableInsertEvent) {
 											MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemPopupItemTableInsertEvent
 													.getTarget();
-											setSelectResult(
+											setSelectResult(menuitemWithData
+													.get_querySelectFinal(),
 													menuitemWithData
-															.get_querySelectFinal(),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".driver"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".url"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()));
+															.getDriverName(),
+													menuitemWithData
+															.getUrlData());
 										}
 									});
 							menuitemPopupItemTableInsert
@@ -737,9 +686,9 @@ public class QueryWindows extends Window {
 							menuitemPopupItemTableUpdate
 									.set_querySelectFinal(queryUpdate);
 							menuitemPopupItemTableUpdate
-									.set_databaseKind(databaseKind);
+									.setDriverName(databaseDriver);
 							menuitemPopupItemTableUpdate
-									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+									.setUrlData(databaseUrl);
 							menuitemPopupItemTableUpdate
 									.setImage("image/sql.png");
 							menuitemPopupItemTableUpdate.addEventListener(
@@ -748,19 +697,12 @@ public class QueryWindows extends Window {
 												Event menuitemPopupItemTableUpdateEvent) {
 											MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemPopupItemTableUpdateEvent
 													.getTarget();
-											setSelectResult(
+											setSelectResult(menuitemWithData
+													.get_querySelectFinal(),
 													menuitemWithData
-															.get_querySelectFinal(),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".driver"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".url"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()));
+															.getDriverName(),
+													menuitemWithData
+															.getUrlData());
 										}
 									});
 							menuitemPopupItemTableUpdate
@@ -773,28 +715,21 @@ public class QueryWindows extends Window {
 							menuitemPopupItemTableDelete
 									.set_querySelectFinal(queryDelete);
 							menuitemPopupItemTableDelete
-									.set_databaseKind(databaseKind);
+									.setDriverName(databaseDriver);
 							menuitemPopupItemTableDelete
-									.set_indexDataSqlServerFinal(indexDataSqlServerFinal);
+									.setUrlData(databaseUrl);
 							menuitemPopupItemTableDelete.addEventListener(
 									"onClick", new EventListener<Event>() {
 										public void onEvent(
 												Event menuitemPopupItemTableDeleteEvent) {
 											MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemPopupItemTableDeleteEvent
 													.getTarget();
-											setSelectResult(
+											setSelectResult(menuitemWithData
+													.get_querySelectFinal(),
 													menuitemWithData
-															.get_querySelectFinal(),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".driver"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()),
-													serviceMain.getPropSetting(menuitemWithData
-															.get_databaseKind()
-															+ ".url"
-															+ menuitemWithData
-																	.get_indexDataSqlServerFinal()));
+															.getDriverName(),
+													menuitemWithData
+															.getUrlData());
 										}
 									});
 							menuitemPopupItemTableDelete
