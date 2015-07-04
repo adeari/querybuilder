@@ -22,6 +22,8 @@ import org.zkoss.zul.Window;
 import apps.entity.QueryData;
 import apps.entity.Users;
 import apps.service.CheckService;
+import apps.service.ServiceImplMain;
+import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
 
 public class QuerySavedWindow extends Window {
@@ -93,62 +95,64 @@ public class QuerySavedWindow extends Window {
 							if (canSave) {
 								org.hibernate.Session session = null;
 								try {
-								session = hibernateUtil
-										.getSessionFactory().openSession();
+									session = hibernateUtil.getSessionFactory()
+											.openSession();
 
-								if (canSave) {
-									Criteria criteria = session
-											.createCriteria(QueryData.class);
-									criteria.add(Restrictions.eq("named",
-											tableNameTextbox.getValue()));
-									if (criteria.list().size() > 0) {
-										commentLabel.setVisible(true);
-										commentLabel
-												.setValue("Table name already exist");
-										tableNameTextbox.setFocus(true);
-										tableNameTextbox.select();
-										canSave = false;
+									if (canSave) {
+										Criteria criteria = session
+												.createCriteria(QueryData.class);
+										criteria.add(Restrictions.eq("named",
+												tableNameTextbox.getValue()));
+										if (criteria.list().size() > 0) {
+											commentLabel.setVisible(true);
+											commentLabel
+													.setValue("Table name already exist");
+											tableNameTextbox.setFocus(true);
+											tableNameTextbox.select();
+											canSave = false;
+										}
 									}
-								}
-								
 
-								if (canSave) {
-									Transaction trx = session
-											.beginTransaction();
+									if (canSave) {
+										Transaction trx = session
+												.beginTransaction();
 
-									org.zkoss.zk.ui.Session sessionLocal = Sessions
-											.getCurrent();
-									Users user = (Users) sessionLocal
-											.getAttribute("userlogin");
+										org.zkoss.zk.ui.Session sessionLocal = Sessions
+												.getCurrent();
+										Users user = (Users) sessionLocal
+												.getAttribute("userlogin");
 
-									QueryData queryData = new QueryData(
-											_driverName, _url, tableNameTextbox
-													.getValue(), _sql, user,
-											user, new Date(), new Date());
+										QueryData queryData = new QueryData(
+												_driverName, _url,
+												tableNameTextbox.getValue(),
+												_sql, user, user, new Date(),
+												new Date());
 
-									session.save(queryData);
-									
-									user.setIsdeleted(false);
-									session.update(user);
+										session.save(queryData);
 
-									trx.commit();
-									detach();
-								}
+										user.setIsdeleted(false);
+										session.update(user);
+										ServiceMain serviceMain = new ServiceImplMain();
+										serviceMain.saveUserActivity("Query with name "+tableNameTextbox.getValue()+" created");
+										trx.commit();
+
+										detach();
+									}
 								} catch (Exception e) {
 									logger.error(e.getMessage(), e);
-									
+
 								} finally {
 									if (session != null) {
 										try {
 											session.close();
-											
+
 										} catch (Exception e) {
 											logger.error(e.getMessage(), e);
-										} 
+										}
 									}
-									
+
 								}
-								
+
 							}
 
 							saveButton.setDisabled(false);

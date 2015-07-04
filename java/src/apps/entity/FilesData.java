@@ -36,7 +36,7 @@ public class FilesData implements Serializable {
 	private String filesizeToShow;
 	
 	@Column(name = "download_link", nullable = false, length = 50)
-	private String download_link;
+	private String downloadLink;
 
 	public Integer getId() {
 		return id;
@@ -86,11 +86,12 @@ public class FilesData implements Serializable {
 		this.filesizeToShow = filesizeToShow;
 	}
 
-	public String getDownload_link() {
-		return download_link;
+	public String getDownloadLink() {
+		return downloadLink;
 	}
 
-	public void setDownload_link(String download_link) {
-		this.download_link = download_link;
+	public void setDownloadLink(String downloadLink) {
+		this.downloadLink = downloadLink;
 	}
+
 }

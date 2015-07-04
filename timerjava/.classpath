@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="F:/rudofa/src/library/opencsv-3.4.jar"/>
 	<classpathentry kind="lib" path="F:/rudofa/src/library/jxl.jar"/>
 	<classpathentry kind="lib" path="F:/rudofa/src/library/itextpdf-5.5.6.jar"/>
+	<classpathentry kind="lib" path="F:/rudofa/src/java/WebContent/WEB-INF/lib/javax.mail.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

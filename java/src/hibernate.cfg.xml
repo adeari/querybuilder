@@ -16,6 +16,8 @@
     <mapping class="apps.entity.Activity"/>
     <mapping class="apps.entity.FilesData"/>
     <mapping class="apps.entity.FileSizeUsed"/>
+    <mapping class="apps.entity.FileSizeTotal"/>
+    <mapping class="apps.entity.UserActivity"/>
     
   </session-factory>
 </hibernate-configuration>

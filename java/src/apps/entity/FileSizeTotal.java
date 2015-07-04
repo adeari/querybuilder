@@ -8,23 +8,17 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "tb_filesize_used")
-public class FileSizeUsed implements Serializable {
+@Table(name = "tb_filetotal")
+public class FileSizeTotal implements Serializable {
 	private static final long serialVersionUID = -6089635856765624147L;
 
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id", unique = true, nullable = false)
 	private Integer id;
-
-	@ManyToOne
-	@JoinColumn(name="user_id", nullable = true)
-	private Users userOwner;
 	
 	@Column(name = "filesize", nullable = false)
 	private double filesize;
@@ -40,14 +34,6 @@ public class FileSizeUsed implements Serializable {
 		this.id = id;
 	}
 
-
-	public Users getUserOwner() {
-		return userOwner;
-	}
-
-	public void setUserOwner(Users userOwner) {
-		this.userOwner = userOwner;
-	}
 
 	public double getFilesize() {
 		return filesize;

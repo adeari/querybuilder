@@ -392,6 +392,7 @@ public class QueryListWindow extends Window {
 										Transaction trx = session
 												.beginTransaction();
 										session.delete(selectedData);
+										serviceMain.saveUserActivity("Query "+selectedData.getNamed()+" deleted");
 										trx.commit();
 
 										checkService.userIsDeleted( userBefore);

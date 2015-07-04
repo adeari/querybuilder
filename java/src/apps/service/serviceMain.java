@@ -20,6 +20,7 @@ public interface ServiceMain {
 	public String getValueColumn(String columnName, String columnType, int columnLength);
 	public String convertStringFromDate(String format, Date date);
 	public String convertPass(String pass);
-	public Timestamp convertToTimeStamp(String format, String date);
 	public Users get1UserByUsernameAndPassword(String username, String pass);
+	public Timestamp convertToTimeStamp(String format, String date);
+	public void saveUserActivity(String notes);
 }

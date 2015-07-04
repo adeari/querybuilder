@@ -46,14 +46,14 @@ public class UsersFormWindow extends Window {
 	private Label commentLabel;
 	private Div div;
 
-	private ServiceMain servviceMain;
+	private ServiceMain serviceMain;
 
 	public UsersFormWindow(String title, Users user) {
 		super(title, null, true);
 		_user = user;
 		_eventName = "";
 
-		servviceMain = new ServiceImplMain();
+		serviceMain = new ServiceImplMain();
 
 		div = new Div();
 		div.setParent(this);
@@ -294,7 +294,7 @@ public class UsersFormWindow extends Window {
 												.beginTransaction();
 										Users tbUsers = new Users(
 												usernameTextbox.getValue(),
-												servviceMain
+												serviceMain
 														.convertPass(password2Textbox
 																.getValue()),
 												divisiSelectbox
@@ -305,6 +305,7 @@ public class UsersFormWindow extends Window {
 														.toString(), true, emailTextbox.getValue());
 
 										session.save(tbUsers);
+										serviceMain.saveUserActivity("Username "+tbUsers.getUsername()+" created");
 										trx.commit();
 										_eventName = "Add";
 									} else {
@@ -312,7 +313,7 @@ public class UsersFormWindow extends Window {
 												.beginTransaction();
 										if (!password2Textbox.getValue()
 												.isEmpty()) {
-											_user.setPass(servviceMain
+											_user.setPass(serviceMain
 													.convertPass(password2Textbox
 															.getValue()));
 										}
@@ -324,6 +325,7 @@ public class UsersFormWindow extends Window {
 												.toString());
 										_user.setEmail(emailTextbox.getValue());
 										session.update(_user);
+										serviceMain.saveUserActivity("Username "+_user.getUsername()+" editted");
 										trx.commit();
 										_eventName = "Edit";
 									}

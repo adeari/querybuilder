@@ -168,6 +168,7 @@ public class ChangePasswordWindow extends Window {
 									session.update(userUpdate);
 
 									trx.commit();
+									serviceMain.saveUserActivity("Change password");
 									detach();
 								} catch (Exception e) {
 									logger.error(e.getMessage(), e);

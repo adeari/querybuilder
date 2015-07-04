@@ -34,6 +34,8 @@ import apps.entity.QueryData;
 import apps.entity.Users;
 import apps.entity.UsersQuery;
 import apps.service.CheckService;
+import apps.service.ServiceImplMain;
+import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
 
 public class UserListForQueryList extends Window {
@@ -51,9 +53,12 @@ public class UserListForQueryList extends Window {
 	private List<Integer> userIDOnData;
 	private List<UsersQuery> userQueries;
 	private Textbox userSearchTextbox;
+	
+	private ServiceMain serviceMain;
 
 	UserListForQueryList(String title, QueryData queryData) {
 		super(title, null, true);
+		serviceMain = new ServiceImplMain();
 		_queryData = queryData;
 		
 
@@ -145,6 +150,7 @@ public class UserListForQueryList extends Window {
 
 								session = hibernateUtil.getSessionFactory()
 										.openSession();
+								String message = "";
 								for (Listitem itemSelected : listitems) {
 									ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
 											.getChildren().get(0);
@@ -167,6 +173,7 @@ public class UserListForQueryList extends Window {
 										session.save(usersQuery);
 										userSelected.setIsdeleted(false);
 										session.update(userSelected);
+										message += "Add user "+userSelected.getUsername()+" to "+_queryData.getNamed()+"\n";
 										trx.commit();
 									} else if (!itemSelected.isSelected()
 											&& criteria.list().size() > 0) {
@@ -175,12 +182,15 @@ public class UserListForQueryList extends Window {
 										Transaction trx = session
 												.beginTransaction();
 										session.delete(usersQuery);
+										message += "Remove user "+userSelected.getUsername()+" in "+_queryData.getNamed()+"\n";
 										trx.commit();
 
 										checkService
 												.userIsDeleted(userSelected);
 									}
 								}
+								serviceMain.saveUserActivity(message);
+								
 								checkService.queryIsDeleted(_queryData);
 							} catch (Exception e) {
 								logger.error(e.getMessage(), e);
@@ -305,6 +315,7 @@ public class UserListForQueryList extends Window {
 							session.update(userSelected);
 							_queryData.setDeleted(false);
 							session.update(_queryData);
+							serviceMain.saveUserActivity("Add user "+userSelected.getUsername()+" to "+_queryData.getNamed());
 							trx.commit();
 						} else if (!itemSelected.isSelected()
 								&& criteria.list().size() > 0) {
@@ -315,6 +326,7 @@ public class UserListForQueryList extends Window {
 							trx.commit();
 							checkService.queryIsDeleted(_queryData);
 							checkService.userIsDeleted(userSelected);
+							serviceMain.saveUserActivity("Remove user "+userSelected.getUsername()+" in "+_queryData.getNamed());
 						}
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);

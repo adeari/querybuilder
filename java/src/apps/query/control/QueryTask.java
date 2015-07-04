@@ -98,7 +98,8 @@ public class QueryTask extends Window {
 			fileTypeLabel.setStyle("boder: 0");
 			fileTypeSelectbox = new Selectbox();
 			fileTypeSelectbox.setParent(fileTypeRow);
-			String[] fileTypeList = new String[] { "CSV",  "Excel", "PDF", "Text" };
+			String[] fileTypeList = new String[] { "CSV", "Excel", "PDF",
+					"Text" };
 			ListModelList<String> fileTypeListModelList = new ListModelList<String>(
 					fileTypeList);
 			ListModel<String> fileTypeListModel = fileTypeListModelList;
@@ -132,18 +133,32 @@ public class QueryTask extends Window {
 									Messagebox.YES | Messagebox.NO,
 									Messagebox.QUESTION) == Messagebox.YES) {
 								preparedStatement.executeUpdate();
+								serviceMain
+										.saveUserActivity("Run query named : "
+												+ _queryQueryData.getNamed()
+												+ "\nQuery : "
+												+ _queryQueryData.getSql()
+												+ "\nResult : Success");
 								detach();
 								Messagebox.show("Process Done", "Information",
 										Messagebox.OK, Messagebox.INFORMATION);
 							}
 						} else {
 							preparedStatement.executeUpdate();
+							serviceMain.saveUserActivity("Run query named : "
+									+ _queryQueryData.getNamed() + "\nQuery : "
+									+ _queryQueryData.getSql()
+									+ "\nResult : Success");
 							detach();
 							Messagebox.show("Process Done", "Information",
 									Messagebox.OK, Messagebox.INFORMATION);
 						}
 					} catch (Exception ex) {
 						logger.error(ex.getMessage(), ex);
+						serviceMain.saveUserActivity("Run query named : "
+								+ _queryQueryData.getNamed() + "\nQuery : "
+								+ _queryQueryData.getSql()
+								+ "\nResult : Error = " + ex.getMessage());
 						Messagebox.show("Query error", "Error", Messagebox.OK,
 								Messagebox.ERROR);
 					} finally {
@@ -175,12 +190,20 @@ public class QueryTask extends Window {
 						querySession.save(activity);
 						trx.commit();
 						querySession.close();
+						serviceMain.saveUserActivity("Run query named : "
+								+ _queryQueryData.getNamed() + "\nQuery : "
+								+ _queryQueryData.getSql()
+								+ "\nResult : Success");
 						detach();
 						Messagebox.show("Please wait for process this task",
 								"Information", Messagebox.OK,
 								Messagebox.INFORMATION);
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);
+						serviceMain.saveUserActivity("Run query named : "
+								+ _queryQueryData.getNamed() + "\nQuery : "
+								+ _queryQueryData.getSql()
+								+ "\nResult : Error = " + e.getMessage());
 						Messagebox.show("Query error", "Error", Messagebox.OK,
 								Messagebox.ERROR);
 					} finally {

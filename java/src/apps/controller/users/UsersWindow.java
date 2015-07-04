@@ -383,6 +383,7 @@ public class UsersWindow extends Window {
 												Transaction trx = session
 														.beginTransaction();
 												session.delete(userEvent);
+												serviceMain.saveUserActivity("Username "+userEvent.getUsername()+" deleted");
 												trx.commit();
 											} catch (Exception e) {
 												logger.error(e.getMessage(), e);

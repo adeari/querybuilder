@@ -20,10 +20,6 @@ public class TimerMain {
 	private Timer timer;
 	private ServiceMain serviceMain;
 
-	public static void main(String args[]) {
-		new TimerMain();
-	}
-
 	public TimerMain() {
 		serviceMain = new ServiceMain();
 		timer = new Timer();
@@ -100,5 +96,7 @@ public class TimerMain {
 			}
 		}
 	}
-
+	public static void main(String args[]) {
+		new TimerMain();
+	}
 }

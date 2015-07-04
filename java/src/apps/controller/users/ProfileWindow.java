@@ -21,6 +21,8 @@ import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
 import apps.entity.Users;
+import apps.service.ServiceImplMain;
+import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
 
 public class ProfileWindow extends Window {
@@ -123,6 +125,8 @@ public class ProfileWindow extends Window {
 						_user.setEmail(emailTextbox.getValue());
 						querySession.update(_user);
 						trx.commit();
+						ServiceMain serviceMain = new ServiceImplMain();
+						serviceMain.saveUserActivity("Profile changed");
 						detach();
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);

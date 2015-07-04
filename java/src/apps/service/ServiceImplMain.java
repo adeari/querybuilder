@@ -24,6 +24,7 @@ import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zul.Column;
 import org.zkoss.zul.Columns;
 import org.zkoss.zul.Grid;
@@ -32,6 +33,7 @@ import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
 
+import apps.entity.UserActivity;
 import apps.entity.Users;
 
 public class ServiceImplMain implements ServiceMain {
@@ -92,16 +94,16 @@ public class ServiceImplMain implements ServiceMain {
 	}
 
 	public Component getResultGrid(String sql, String driverName, String url) {
-		if (driverName == null || (driverName.isEmpty()) ) {
+		if (driverName == null || (driverName.isEmpty())) {
 			Label labelResult = new Label("Select database on left first");
 			return labelResult;
 		}
-		if (url == null || (url.isEmpty()) ) {
+		if (url == null || (url.isEmpty())) {
 			Label labelResult = new Label("Select database on left first");
 			return labelResult;
 		}
 		String messageHandle = "Data empty";
-		
+
 		Connection connection = null;
 		try {
 			connection = getConnection(driverName, url);
@@ -111,10 +113,10 @@ public class ServiceImplMain implements ServiceMain {
 
 			if (sql.toUpperCase().trim().startsWith("SELECT")) {
 				ResultSet resultSet = null;
-				
+
 				try {
 					resultSet = preparedStatement.executeQuery();
-					
+
 					if (resultSet.next()) {
 						resultSet = preparedStatement.executeQuery();
 						Grid gridResult = new Grid();
@@ -174,9 +176,11 @@ public class ServiceImplMain implements ServiceMain {
 						}
 						rowsResult.setParent(gridResult);
 
+						saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : success");
 						return (Component) gridResult;
 					} else {
 						Label labelResult = new Label(messageHandle);
+						saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : "+messageHandle);
 						return labelResult;
 					}
 				} catch (Exception e) {
@@ -188,12 +192,14 @@ public class ServiceImplMain implements ServiceMain {
 					}
 				}
 				Label labelResult = new Label(messageHandle);
+				saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : "+messageHandle);
 				return labelResult;
 			} else if (sql.toUpperCase().trim().startsWith("DELETE")) {
 				if (Messagebox.show("Are you sure to delete data", "Important",
 						Messagebox.YES | Messagebox.NO, Messagebox.QUESTION) == Messagebox.YES) {
 					preparedStatement.executeUpdate();
 					Label labelResult = new Label("Process Done");
+					saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : success");
 					return labelResult;
 				} else {
 					Label labelResult = new Label("Nothing");
@@ -202,6 +208,7 @@ public class ServiceImplMain implements ServiceMain {
 			} else {
 				preparedStatement.executeUpdate();
 				Label labelResult = new Label("Process Done");
+				saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : success");
 				return labelResult;
 			}
 		} catch (Exception ex) {
@@ -217,6 +224,7 @@ public class ServiceImplMain implements ServiceMain {
 			}
 		}
 		Label labelResult = new Label(messageHandle);
+		saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : "+messageHandle);
 		return labelResult;
 	}
 
@@ -305,4 +313,27 @@ public class ServiceImplMain implements ServiceMain {
 		}
 	}
 
+	public void saveUserActivity(String notes) {
+		if (Sessions.getCurrent().getAttribute("userlogin") != null) {
+			Session session = null;
+			try {
+				session = hibernateUtil.getSessionFactory().openSession();
+				UserActivity userActivity = new UserActivity((Users) Sessions
+						.getCurrent().getAttribute("userlogin"), notes);
+				Transaction trx = session.beginTransaction();
+				session.save(userActivity);
+				trx.commit();
+			} catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			} finally {
+				if (session != null) {
+					try {
+						session.close();
+					} catch (Exception e) {
+						logger.error(e.getMessage(), e);
+					}
+				}
+			}
+		}
+	}
 }

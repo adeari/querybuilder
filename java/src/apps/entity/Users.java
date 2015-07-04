@@ -14,7 +14,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "tb_users")
 public class Users implements Serializable {
-	private static final long serialVersionUID = -6562694591463283825L;
+	private static final long serialVersionUID = -5627436623961499197L;
 
 	@Id
     @GeneratedValue(strategy = IDENTITY)
@@ -44,6 +44,10 @@ public class Users implements Serializable {
 	
 	public Users() {
 		
+	}
+	
+	public Users(Integer id1) {
+		id = id1;
 	}
 	
 	public Users(String username1, String pass1, String divisi1, boolean isdeleted1, String email1) {

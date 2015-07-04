@@ -250,6 +250,7 @@ public class QueryWindows extends Window {
 									if (!userBefore.equals(user)) {
 										checkService.userIsDeleted(userBefore);
 									}
+									serviceMain.saveUserActivity("Query "+_queryData.getNamed()+" editted");
 									queryWindow.detach();
 
 								}

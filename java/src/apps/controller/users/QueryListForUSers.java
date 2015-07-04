@@ -102,6 +102,7 @@ public class QueryListForUSers extends Window {
 
 								session = hibernateUtil.getSessionFactory()
 										.openSession();
+								String message = "";
 								for (Listitem itemSelected : listitems) {
 									ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
 											.getChildren().get(0);
@@ -125,6 +126,7 @@ public class QueryListForUSers extends Window {
 										queryData.setDeleted(false);
 										session.update(queryData);
 										trx.commit();
+										message += "Add access from user "+_user.getUsername()+" in "+queryData.getNamed();
 									} else if (!itemSelected.isSelected()
 											&& criteria.list().size() > 0) {
 										UsersQuery usersQuery = (UsersQuery) criteria
@@ -134,10 +136,11 @@ public class QueryListForUSers extends Window {
 										session.delete(usersQuery);
 										trx.commit();
 										checkService.queryIsDeleted(queryData);
-
+										message += "Remove access from user "+_user.getUsername()+" in "+queryData.getNamed();
 									}
 								}
 								checkService.userIsDeleted(_user);
+								serviceMain.saveUserActivity(message);
 							} catch (Exception e) {
 								logger.error(e.getMessage(), e);
 
@@ -279,6 +282,7 @@ public class QueryListForUSers extends Window {
 							queryData.setDeleted(false);
 							session.update(queryData);
 							trx.commit();
+							serviceMain.saveUserActivity("Add access from user "+_user.getUsername()+" in "+queryData.getNamed());
 						} else if (!itemSelected.isSelected()
 								&& criteria.list().size() > 0) {
 							UsersQuery usersQuery = (UsersQuery) criteria
@@ -288,6 +292,7 @@ public class QueryListForUSers extends Window {
 							trx.commit();
 							checkService.queryIsDeleted(queryData);
 							checkService.userIsDeleted(_user);
+							serviceMain.saveUserActivity("Remove access from user "+_user.getUsername()+" in "+queryData.getNamed());
 						}
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);

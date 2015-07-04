@@ -43,6 +43,7 @@ import apps.controller.users.ChangePasswordWindow;
 import apps.controller.users.ProfileWindow;
 import apps.controller.users.UsersWindow;
 import apps.entity.Activity;
+import apps.entity.FileSizeTotal;
 import apps.entity.FileSizeUsed;
 import apps.entity.Users;
 import apps.query.control.QueryOperation;
@@ -217,6 +218,8 @@ public class MenuWindow extends Window {
 									"Query operation");
 							queryOperation.setParent(menuWindow);
 							queryOperation.doModal();
+							
+							refreshActivityListbox();
 
 							queryOperationMenuitem.setDisabled(false);
 						}
@@ -327,7 +330,7 @@ public class MenuWindow extends Window {
 		activityListbox.setMold("paging");
 		activityListbox.setAutopaging(true);
 		activityListbox.setEmptyMessage("No actifity");
-		activityListbox.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%;");
+		activityListbox.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%; height: 600px");
 		activityListbox.setItemRenderer(new ActivityItemRenderer());
 		
 		Auxhead topAuxhead = new Auxhead();
@@ -339,29 +342,37 @@ public class MenuWindow extends Window {
 		
 		Listhead listhead = new Listhead();
 		listhead.setParent(activityListbox);
+		listhead.setSizable(true);
 		
 		Listheader queryNameListheader = new Listheader("Query name");
 		queryNameListheader.setParent(listhead);
+		queryNameListheader.setSort("auto(queryName)");
 		
 		Listheader queryListheader = new Listheader("Query");
 		queryListheader.setParent(listhead);
+		queryListheader.setSort("auto(query)");
 		
 		Listheader filetypeListheader = new Listheader("File type");
 		filetypeListheader.setParent(listhead);
+		filetypeListheader.setSort("auto(filetype)");
 		
 		Listheader createdAtListheader = new Listheader("Created At");
 		createdAtListheader.setParent(listhead);
+		createdAtListheader.setSort("auto(createdAt)");
 		
 		Listheader doneAtListheader = new Listheader("Done At");
 		doneAtListheader.setParent(listhead);
+		doneAtListheader.setSort("auto(doneAt)");
 		
 		Listheader downloadListheader = new Listheader("Download");
 		downloadListheader.setParent(listhead);
 		downloadListheader.setStyle("text-align: center;");
+		downloadListheader.setSort("auto(fileData.id)");
 		
 		Listheader fileSizeListheader = new Listheader("File size");
 		fileSizeListheader.setParent(listhead);
 		fileSizeListheader.setStyle("text-align: right; padding: 0 25px 0 0;");
+		fileSizeListheader.setSort("auto(fileData.filesize)");
 		
 		settingForLoginUser();
 	}
@@ -377,15 +388,18 @@ public class MenuWindow extends Window {
 			
 			activityListbox.setModel(new ListModelList<Activity>((List<Activity>) criteria.list()));
 			
-			criteria = sessionSelect.createCriteria(FileSizeUsed.class);
+			
 			if (_user.getDivisi().equalsIgnoreCase("admin")) {
-				criteria.add(Restrictions.eq("userOwner", "total"));
+				criteria = sessionSelect.createCriteria(FileSizeTotal.class);
+				FileSizeTotal fileSizeTotal = (FileSizeTotal) criteria.uniqueResult();
+				if (fileSizeTotal != null) {
+					totalFileSizeTextbox.setValue(fileSizeTotal.getFilesizeShow());
+				}
 			} else {
+				criteria = sessionSelect.createCriteria(FileSizeUsed.class);
 				criteria.add(Restrictions.eq("userOwner", _user));
-			}
-			if (criteria.list().size() > 0) {
 				FileSizeUsed fileSizeUsed = (FileSizeUsed) criteria.uniqueResult();
-				if (fileSizeUsed.getFilesize() > 0) {
+				if (fileSizeUsed != null) {
 					totalFileSizeTextbox.setValue(fileSizeUsed.getFilesizeShow());
 				}
 			}
@@ -401,12 +415,12 @@ public class MenuWindow extends Window {
 					logger.error(e.getMessage(), e);
 				}
 			}
-
 		}
 	}
 
 	public void logout() {
 		if (_user != null) {
+			serviceMain.saveUserActivity("Logout");
 			_session.removeAttribute("userlogin");
 
 			MenuWindow menuWindow = (MenuWindow) mainWindow.getChildren()
@@ -425,6 +439,7 @@ public class MenuWindow extends Window {
 		if (_user == null) {
 			logout();
 		} else {
+			serviceMain.saveUserActivity("Login");
 			if (_user.getDivisi().equalsIgnoreCase("Admin")) {
 				usersMenuitem.setVisible(true);
 				queryBuilderMenuitem.setVisible(true);
@@ -435,7 +450,7 @@ public class MenuWindow extends Window {
 				queryManagementMenuitem.setVisible(false);
 			}
 			userloginLabel.setValue("Welcome " + _user.getUsername());
-			topAuxheader.setLabel(_user.getUsername()+" Activity");
+			topAuxheader.setLabel(_user.getUsername()+"'s query activity");
 			
 			refreshActivityListbox();
 		}
@@ -449,8 +464,8 @@ public class MenuWindow extends Window {
 				throws Exception {
 			listitem.appendChild(new Listcell(activity.getQueryName()));
 			String query = activity.getQuery();
-			if (query.length() > 100) {
-				query = query.substring(0, 100);
+			if (query.length() > 25) {
+				query = query.substring(0, 25)+"...";
 			}
 			listitem.appendChild(new Listcell(query));
 			listitem.appendChild(new Listcell(activity.getFiletype()));
@@ -464,20 +479,27 @@ public class MenuWindow extends Window {
 				Listcell downloadListcell = new Listcell();
 				downloadListcell.setParent(listitem);
 				downloadListcell.setStyle("text-align: center;");
+				
+				File file = new File(serviceMain.getQuery("location."+activity.getFileData().getFiletype().toLowerCase())+"/"+activity.getFileData().getFilename());
+				if (file.isFile()) {
 				ButtonCustom downloadButtonCustom = new ButtonCustom("image/download.png", activity);
 				downloadButtonCustom.addEventListener(Events.ON_CLICK,
 						new EventListener<Event>() {
 							public void onEvent(Event downloadEvent) {
 								ButtonCustom buttonSelectedButtonCustom = (ButtonCustom) downloadEvent.getTarget();
 								Activity activitySelected = (Activity) buttonSelectedButtonCustom.getDataObject();
-								File file = new File(serviceMain.getQuery("location.csv")+"/"+activitySelected.getFileData().getFilename());
+								File file = new File(serviceMain.getQuery("location."+activitySelected.getFileData().getFiletype().toLowerCase())+"/"+activitySelected.getFileData().getFilename());
 								try {
+									serviceMain.saveUserActivity("Download file "+file.getName());
 									Filedownload.save(file, activitySelected.getFiletype());
 								} catch (FileNotFoundException e) {
 									logger.error(e.getMessage(), e);
 								}
 							}});
 				downloadButtonCustom.setParent(downloadListcell);
+				} else {
+					Listcell listcell = new Listcell("File not exist");
+				}
 				
 				
 				Listcell fileSizeListcell = new Listcell(activity.getFileData().getFilesizeToShow());
