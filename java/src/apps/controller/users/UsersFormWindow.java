@@ -24,6 +24,7 @@ import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
 import apps.entity.Users;
+import apps.service.CheckService;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
@@ -98,7 +99,7 @@ public class UsersFormWindow extends Window {
 		divisiSelectbox.setSelectedIndex(1);
 
 		rows.appendChild(row);
-		
+
 		row = new Row();
 		row.setParent(rows);
 		Label emailLabel = new Label("Email");
@@ -106,8 +107,9 @@ public class UsersFormWindow extends Window {
 		emailTextbox = new Textbox();
 		emailTextbox.setParent(row);
 		emailTextbox.setWidth("190px");
-		if (_user != null && (_user.getEmail() != null && (!_user.getEmail().isEmpty()))) {
-				emailTextbox.setText(_user.getEmail());
+		if (_user != null
+				&& (_user.getEmail() != null && (!_user.getEmail().isEmpty()))) {
+			emailTextbox.setText(_user.getEmail());
 		}
 
 		row = new Row();
@@ -205,9 +207,21 @@ public class UsersFormWindow extends Window {
 
 								}
 							}
-							
-							if (canSAve
-									&& !emailTextbox.getValue().isEmpty()) {
+
+							if (canSAve && !emailTextbox.getValue().isEmpty()) {
+								CheckService checkService = new CheckService();
+								if (!checkService
+										.isValidEmailAddress(emailTextbox
+												.getValue())) {
+									commentLabel
+											.setValue("This email not correct email");
+									div.setVisible(true);
+									emailTextbox.setFocus(true);
+									canSAve = false;
+								}
+							}
+
+							if (canSAve && !emailTextbox.getValue().isEmpty()) {
 
 								Session sessionSelect = null;
 								try {
@@ -275,8 +289,13 @@ public class UsersFormWindow extends Window {
 								}
 
 								if (canSAve
-										&& !password2Textbox.getValue().toString().equalsIgnoreCase(
-												passwordTextbox.getValue().toString())) {
+										&& !password2Textbox
+												.getValue()
+												.toString()
+												.equalsIgnoreCase(
+														passwordTextbox
+																.getValue()
+																.toString())) {
 									commentLabel.setValue("password not same");
 									div.setVisible(true);
 									password2Textbox.setFocus(true);
@@ -302,10 +321,14 @@ public class UsersFormWindow extends Window {
 														.getElementAt(
 																divisiSelectbox
 																		.getSelectedIndex())
-														.toString(), true, emailTextbox.getValue());
+														.toString(), true,
+												emailTextbox.getValue());
 
 										session.save(tbUsers);
-										serviceMain.saveUserActivity("Username "+tbUsers.getUsername()+" created");
+										serviceMain
+												.saveUserActivity("Username "
+														+ tbUsers.getUsername()
+														+ " created");
 										trx.commit();
 										_eventName = "Add";
 									} else {
@@ -325,7 +348,10 @@ public class UsersFormWindow extends Window {
 												.toString());
 										_user.setEmail(emailTextbox.getValue());
 										session.update(_user);
-										serviceMain.saveUserActivity("Username "+_user.getUsername()+" editted");
+										serviceMain
+												.saveUserActivity("Username "
+														+ _user.getUsername()
+														+ " editted");
 										trx.commit();
 										_eventName = "Edit";
 									}

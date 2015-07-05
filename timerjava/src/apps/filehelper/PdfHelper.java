@@ -32,7 +32,7 @@ import com.itextpdf.text.pdf.PdfPTableEvent;
 import com.itextpdf.text.pdf.PdfWriter;
 
 public class PdfHelper implements PdfPTableEvent {
-	
+
 	private static final Logger logger = Logger.getLogger(PdfHelper.class);
 
 	private String _sql;
@@ -40,33 +40,32 @@ public class PdfHelper implements PdfPTableEvent {
 	private String _url;
 	private ServiceMain serviceMain;
 	private long _id;
-	
+
 	public PdfHelper() {
-		
+
 	}
 
 	public PdfHelper(ResultSet resultSetData) {
 		serviceMain = new ServiceMain();
-		
+
 		Connection connection = null;
 		String filename = serviceMain.getPropSetting("location.pdf") + "/"
 				+ serviceMain.filename("pdf");
 		File file = new File(filename);
 		Document document = null;
 		AdvancedObject advancedObject = new AdvancedObject();
-		
+
 		try {
 			_id = resultSetData.getLong("id");
 			_sql = resultSetData.getString("query");
 			_driver = resultSetData.getString("driver");
 			_url = resultSetData.getString("connection_string");
-			
+
 			advancedObject.setMemoryMax(serviceMain.getMemoryMax());
 			long memoryUsedNow = serviceMain.getMemoryUsed();
 			advancedObject.setMemoryUsed(memoryUsedNow);
 			advancedObject.setStartAt(new Timestamp((new Date()).getTime()));
 
-			
 			Class.forName(_driver).newInstance();
 			connection = DriverManager.getConnection(_url);
 
@@ -79,45 +78,48 @@ public class PdfHelper implements PdfPTableEvent {
 
 				ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
 				int columnCount = resultSetMetaData.getColumnCount();
-				
+
 				if (columnCount < 7) {
 					document = new Document(PageSize.LEGAL);
 				} else {
 					document = new Document(PageSize.LEGAL.rotate());
 				}
-				PdfWriter.getInstance(document, new FileOutputStream(
-						file));
+				PdfWriter.getInstance(document, new FileOutputStream(file));
 				document.setMargins(10, 10, 10, 10);
 				document.setMarginMirroring(true);
 				document.open();
 				PdfPTableEvent event = new PdfHelper();
-				
-				float[] columnSize = new float[columnCount];				
+
+				float[] columnSize = new float[columnCount];
 				for (int i = 0; i < columnCount; i++) {
 					columnSize[i] = 4;
 				}
-				
+
 				PdfPTable table = new PdfPTable(columnSize);
 				table.setWidthPercentage(100);
 				table.getDefaultCell().setUseAscender(true);
 				table.getDefaultCell().setUseDescender(true);
-				table.getDefaultCell().setHorizontalAlignment(Element.ALIGN_LEFT);
+				table.getDefaultCell().setHorizontalAlignment(
+						Element.ALIGN_LEFT);
 				Font BOLD = new Font(FontFamily.TIMES_ROMAN, 15, Font.BOLD);
 
 				for (int i = 0; i < columnCount; i++) {
-					table.addCell(new Phrase(resultSetMetaData.getColumnName(i + 1), BOLD));
+					table.addCell(new Phrase(resultSetMetaData
+							.getColumnName(i + 1), BOLD));
 				}
 				table.getDefaultCell().setBackgroundColor(null);
 				table.setHeaderRows(1);
 
-
 				while (resultSet.next()) {
 					for (int i = 0; i < columnCount; i++) {
-					table.addCell(resultSet
-							.getString(i + 1));
+						try {
+							table.addCell(resultSet.getString(i + 1));
+						} catch (Exception e) {
+							table.addCell("");
+						}
 					}
 				}
-				
+
 				table.setTableEvent(event);
 				document.add(table);
 				document.newPage();
@@ -126,12 +128,12 @@ public class PdfHelper implements PdfPTableEvent {
 				if (advancedObject.getMemoryUsed() < memoryUsedNow) {
 					advancedObject.setMemoryUsed(memoryUsedNow);
 				}
-				
+
 				document.close();
 				document = null;
 
 				serviceMain.updateActivity(_id, new File(filename), "PDF",
-						"Complete" ,advancedObject);
+						"Complete", advancedObject);
 
 			} finally {
 				if (document != null) {
@@ -151,22 +153,28 @@ public class PdfHelper implements PdfPTableEvent {
 			}
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (IllegalAccessException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (SQLException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (FileNotFoundException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (DocumentException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} finally {
 			if (document != null) {
 				try {
@@ -185,7 +193,7 @@ public class PdfHelper implements PdfPTableEvent {
 		}
 
 	}
-	
+
 	public void tableLayout(PdfPTable table, float[][] widths, float[] heights,
 			int headerRows, int rowStart, PdfContentByte[] canvases) {
 		int columns;

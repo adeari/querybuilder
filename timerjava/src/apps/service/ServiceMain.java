@@ -384,7 +384,7 @@ public class ServiceMain {
 								+ getPropSetting("server.host")
 								+ "/download/file?ridfil="
 								+ resultSet.getString("download_link")
-								+ "\" target=\"_blank\">Download</a>";
+								+ "\" target=\"_blank\" style=\"cursor:pointer;\">Download</a>";
 					}
 				}
 				new EmailService(new EmailObject("from@test.com", emailTo,

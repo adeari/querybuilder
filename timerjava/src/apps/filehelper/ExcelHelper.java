@@ -38,7 +38,7 @@ public class ExcelHelper {
 
 	public ExcelHelper(ResultSet resultSetData) {
 		serviceMain = new ServiceMain();
-		
+
 		Connection connection = null;
 		WorkbookSettings ws = new WorkbookSettings();
 		ws.setLocale(new Locale("en", "EN"));
@@ -55,7 +55,6 @@ public class ExcelHelper {
 			_driver = resultSetData.getString("driver");
 			_url = resultSetData.getString("connection_string");
 
-			
 			Class.forName(_driver).newInstance();
 			connection = DriverManager.getConnection(_url);
 
@@ -65,11 +64,12 @@ public class ExcelHelper {
 			ResultSet resultSet = null;
 			try {
 				resultSet = preparedStatement.executeQuery();
-				
+
 				advancedObject.setMemoryMax(serviceMain.getMemoryMax());
 				long memoryUsedNow = serviceMain.getMemoryUsed();
 				advancedObject.setMemoryUsed(memoryUsedNow);
-				advancedObject.setStartAt(new Timestamp((new Date()).getTime()));
+				advancedObject
+						.setStartAt(new Timestamp((new Date()).getTime()));
 
 				ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
 				int columnCount = resultSetMetaData.getColumnCount();
@@ -78,9 +78,9 @@ public class ExcelHelper {
 						0);
 				int rowUsed = 0;
 				for (int i = 0; i < columnCount; i++) {
-						writableSheet.addCell(new Label(i, rowUsed,
-								resultSetMetaData.getColumnName(i + 1)));
-					
+					writableSheet.addCell(new Label(i, rowUsed,
+							resultSetMetaData.getColumnName(i + 1)));
+
 				}
 				writeWorkbook.write();
 				writeWorkbook.close();
@@ -94,38 +94,44 @@ public class ExcelHelper {
 					writableWorkbook = Workbook.createWorkbook(file, workbook);
 					WritableSheet writableSheet2 = writableWorkbook.getSheet(0);
 					for (int i = 0; i < columnCount; i++) {
-						writableSheet2.addCell(new Label(i, rowUsed, resultSet
-								.getString(i + 1)));
+						try {
+							writableSheet2.addCell(new Label(i, rowUsed,
+									resultSet.getString(i + 1)));
+						} catch (Exception e) {
+							writableSheet2.addCell(new Label(i, rowUsed, ""));
+						}
 					}
 					rowUsed++;
-					
+
 					serviceMain.showMemory();
 					memoryUsedNow = serviceMain.getMemoryUsed();
 					if (advancedObject.getMemoryUsed() < memoryUsedNow) {
 						advancedObject.setMemoryUsed(memoryUsedNow);
 					}
-					
+
 					writableWorkbook.write();
 					writableWorkbook.close();
 					writableWorkbook = null;
 				}
 
 				serviceMain.updateActivity(_id, new File(filename), "Excel",
-						"Complete" ,advancedObject);
+						"Complete", advancedObject);
 			} catch (RowsExceededException e) {
 				logger.error(e.getMessage(), e);
-				serviceMain.updateActivity(_id, null, null,
-						e.getMessage() ,advancedObject );
+				serviceMain.updateActivity(_id, null, null, e.getMessage(),
+						advancedObject);
 			} catch (WriteException e) {
 				logger.error(e.getMessage(), e);
-				serviceMain.updateActivity(_id, null, null,
-						e.getMessage() ,advancedObject);
+				serviceMain.updateActivity(_id, null, null, e.getMessage(),
+						advancedObject);
 			} catch (IOException e) {
 				logger.error(e.getMessage(), e);
-				serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+				serviceMain.updateActivity(_id, null, null, e.getMessage(),
+						advancedObject);
 			} catch (BiffException e) {
 				logger.error(e.getMessage(), e);
-				serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+				serviceMain.updateActivity(_id, null, null, e.getMessage(),
+						advancedObject);
 			} finally {
 				if (resultSet != null) {
 					try {
@@ -138,19 +144,24 @@ public class ExcelHelper {
 
 		} catch (IOException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (IllegalAccessException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (SQLException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage() ,advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} finally {
 			if (writeWorkbook != null) {
 				try {

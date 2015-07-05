@@ -15,11 +15,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 
 import apps.entity.Activity;
 import apps.entity.FilesData;
+import apps.entity.QueryData;
 import apps.entity.Users;
+import apps.entity.UsersQuery;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
@@ -66,7 +69,7 @@ public class DownloadFile extends HttpServlet {
 			}
 			out.println("<form method=\"post\">");
 			out.println("Username <input type=\"text\" name=\"username\">");
-			out.println("Password <input type=\"text\" name=\"password\">");
+			out.println("Password <input type=\"password\" name=\"password\">");
 			out.println("<button>Download</button>");
 			out.println("</form>");
 			out.println("</body></html>");
@@ -96,30 +99,59 @@ public class DownloadFile extends HttpServlet {
 		}
 	}
 
-	private void downloadFile(HttpServletResponse response, String linkDownload, Users user) {
+	private void downloadFile(HttpServletResponse response,
+			String linkDownload, Users user) {
 		serviceMain = new ServiceImplMain();
 		org.hibernate.Session sessionSelect = null;
 		try {
 			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect.createCriteria(Activity.class);
-			criteria.createAlias("fileData", "fileData");
-			criteria.add(Restrictions.eq("fileData.downloadLink", linkDownload));
-			if (!user.getDivisi().equalsIgnoreCase("admin")) {
-				criteria.add(Restrictions.eq("userCreated", user));
+			FilesData filesData = null;
+			if (user.getDivisi().equalsIgnoreCase("admin")) {
+				Criteria criteria = sessionSelect
+						.createCriteria(FilesData.class);
+				criteria.add(Restrictions.eq("downloadLink", linkDownload));
+				filesData = (FilesData) criteria.uniqueResult();
+			} else if (!user.getDivisi().equalsIgnoreCase("admin")) {
+				Criteria criteria = sessionSelect
+						.createCriteria(Activity.class);
+				criteria.createAlias("fileData", "fileData");
+				criteria.add(Restrictions.eq("fileData.downloadLink",
+						linkDownload));
+				Activity activity = (Activity) criteria.uniqueResult();
+				if (activity == null) {
+					showMessage(response, "This file not exist");
+					return;
+				} else {
+					criteria = sessionSelect.createCriteria(QueryData.class);
+					criteria.add(Restrictions.eq("named",
+							activity.getQueryName()));
+					QueryData queryData = (QueryData) criteria.uniqueResult();
+					if (queryData == null) {
+						showMessage(response, "This file not exist");
+						return;
+					} else {
+						criteria = sessionSelect.createCriteria(
+								UsersQuery.class).setProjection(
+								Projections.rowCount());
+						criteria.add(Restrictions.eq("userData", user));
+						criteria.add(Restrictions.eq("queryData", queryData));
+						if (((long) criteria.uniqueResult()) == 0) {
+							showMessage(response, "You don't have access for this file");
+							return;
+						} else {
+							filesData = activity.getFileData();
+						}
+					}
+				}
 			}
-			Activity activity = (Activity) criteria.uniqueResult();
-			if (activity == null) {
-				showMessage(response, "This file not exist");
-				return;
-			}
-			FilesData filesData = activity.getFileData();
+
 			if (filesData == null) {
 				showMessage(response, "This file not exist");
 				return;
 			} else {
 				String filePath = serviceMain.getQuery("location."
-						+ filesData.getFiletype().toLowerCase())+"/"
-						+ filesData.getFilename();
+						+ filesData.getFiletype().toLowerCase())
+						+ "/" + filesData.getFilename();
 				File downloadFile = new File(filePath);
 				if (downloadFile.isFile()) {
 					FileInputStream inStream = new FileInputStream(downloadFile);

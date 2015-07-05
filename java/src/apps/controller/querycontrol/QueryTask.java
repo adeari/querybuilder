@@ -1,4 +1,4 @@
-package apps.query.control;
+package apps.controller.querycontrol;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

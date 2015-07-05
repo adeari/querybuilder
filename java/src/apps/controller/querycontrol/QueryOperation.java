@@ -1,4 +1,4 @@
-package apps.query.control;
+package apps.controller.querycontrol;
 
 import java.util.List;
 

@@ -35,11 +35,11 @@ public class CSVHelper {
 		CSVWriter topCsvWriter = null;
 		FileWriter fileWriter = null;
 		CSVWriter writer = null;
-		
+
 		AdvancedObject advancedObject = new AdvancedObject();
-		
-		String filename = serviceMain.getPropSetting("location."+extension) + "/"
-				+ serviceMain.filename(extension);
+
+		String filename = serviceMain.getPropSetting("location." + extension)
+				+ "/" + serviceMain.filename(extension);
 		try {
 			_id = resultSetData.getLong("id");
 			_sql = resultSetData.getString("query");
@@ -53,7 +53,6 @@ public class CSVHelper {
 
 			Class.forName(_driver).newInstance();
 			connection = DriverManager.getConnection(_url);
-			
 
 			PreparedStatement preparedStatement = connection
 					.prepareStatement(_sql);
@@ -96,22 +95,26 @@ public class CSVHelper {
 					writer = new CSVWriter(fileWriter);
 
 					for (int i = 0; i < columnCount; i++) {
-						if (resultSet.getString(i + 1) == null) {
+						try {
+							if (resultSet.getString(i + 1) == null) {
+								rowVAlue[i] = "";
+							} else {
+								rowVAlue[i] = resultSet.getString(i + 1);
+							}
+						} catch (Exception e) {
 							rowVAlue[i] = "";
-						} else {
-							rowVAlue[i] = resultSet.getString(i + 1);
 						}
 					}
 
 					writer.writeNext(rowVAlue, true);
-					
+
 					serviceMain.showMemory();
 					memoryUsedNow = serviceMain.getMemoryUsed();
 					if (advancedObject.getMemoryUsed() < memoryUsedNow) {
 						advancedObject.setMemoryUsed(memoryUsedNow);
 					}
-						writer.close();
-					
+					writer.close();
+
 					fileWriter.close();
 					writer = null;
 					fileWriter = null;
@@ -134,16 +137,20 @@ public class CSVHelper {
 
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage(), advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (IllegalAccessException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage(), advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (ClassNotFoundException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage(), advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} catch (SQLException e) {
 			logger.error(e.getMessage(), e);
-			serviceMain.updateActivity(_id, null, null, e.getMessage(), advancedObject);
+			serviceMain.updateActivity(_id, null, null, e.getMessage(),
+					advancedObject);
 		} finally {
 			if (writer != null) {
 				try {

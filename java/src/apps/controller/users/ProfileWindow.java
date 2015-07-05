@@ -21,6 +21,7 @@ import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
 import apps.entity.Users;
+import apps.service.CheckService;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
@@ -82,6 +83,16 @@ public class ProfileWindow extends Window {
 				if (canSaved && emailTextbox.getValue().isEmpty()) {
 					canSaved = false;
 					throw new WrongValueException(emailTextbox, "Enter email");
+				}
+				
+				if (canSaved && !emailTextbox.getValue().isEmpty()) {
+					CheckService checkService = new CheckService();
+					if (!checkService
+							.isValidEmailAddress(emailTextbox
+									.getValue())) {
+						canSaved = false;
+						throw new WrongValueException(emailTextbox, "Email is not correct");
+					}
 				}
 
 				if (canSaved) {
