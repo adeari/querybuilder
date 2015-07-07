@@ -305,6 +305,8 @@ public class UsersWindow extends Window {
 		grid.setMold("paging");
 		grid.setAutopaging(true);
 		grid.setHeight("520px");
+		grid.setVflex(true);
+		grid.setPagingPosition("bottom");
 
 		vlayout.appendChild(grid);
 		center.appendChild(vlayout);
