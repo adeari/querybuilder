@@ -41,6 +41,7 @@ import org.zkoss.zul.Window;
 
 import apps.components.ButtonCustom;
 import apps.controller.activity.ActivityDetailWindow;
+import apps.controller.history.UserActivityWindow;
 import apps.controller.querycontrol.QueryOperation;
 import apps.controller.queryy.QueryListWindow;
 import apps.controller.users.ChangePasswordWindow;
@@ -50,6 +51,7 @@ import apps.entity.Activity;
 import apps.entity.FileSizeTotal;
 import apps.entity.FileSizeUsed;
 import apps.entity.FilesData;
+import apps.entity.UserActivity;
 import apps.entity.Users;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
@@ -71,9 +73,14 @@ public class MenuWindow extends Window {
 	private Menuitem queryManagementMenuitem;
 	private Menuitem queryOperationMenuitem;
 	private Menuitem logoutMenuitem;
+
+	private Menuitem myAcivityMenuitem;
+	private Menuitem usersAcivityMenuitem;
+	private Menuitem filesMenuitem;
+
 	private Window mainWindow;
 	private Label userloginLabel;
-	
+
 	private Listbox activityListbox;
 	private Auxheader topAuxheader;
 	private Textbox queryNameSearchingTextbox;
@@ -82,7 +89,7 @@ public class MenuWindow extends Window {
 	private Textbox createdAtSearchingTextbox;
 	private Textbox doneAtSearchingTextbox;
 	private Textbox fileSizeSearchingTextbox;
-	
+
 	private Textbox totalFileSizeTextbox;
 
 	public MenuWindow(Window windowMain) {
@@ -100,9 +107,19 @@ public class MenuWindow extends Window {
 		vlayout.setStyle("position:absolute; top:0; bottom:0; right:0; left:0;border-style:none;");
 
 		Menubar mainMenubar = new Menubar();
+		mainMenubar.setParent(vlayout);
+
 		Menu mainMenu = new Menu("Main");
+		mainMenu.setParent(mainMenubar);
 
 		Menupopup mainMenupopup = new Menupopup();
+		mainMenupopup.setParent(mainMenu);
+
+		Menu historyMenu = new Menu("History");
+		historyMenu.setParent(mainMenubar);
+
+		Menupopup historyMenupopup = new Menupopup();
+		historyMenupopup.setParent(historyMenu);
 
 		queryBuilderMenuitem = new Menuitem("Query builder");
 		queryBuilderMenuitem.setVisible(false);
@@ -255,9 +272,41 @@ public class MenuWindow extends Window {
 					}
 				});
 
-		mainMenupopup.setParent(mainMenu);
-		mainMenu.setParent(mainMenubar);
-		mainMenubar.setParent(vlayout);
+		myAcivityMenuitem = new Menuitem("My activity");
+		myAcivityMenuitem.setParent(historyMenupopup);
+		myAcivityMenuitem.setImage("image/activity.png");
+		myAcivityMenuitem.addEventListener(Events.ON_CLICK,
+				new EventListener<Event>() {
+					public void onEvent(Event event) {
+						if (!myAcivityMenuitem.isDisabled()) {
+							myAcivityMenuitem.setDisabled(true);
+							UserActivityWindow userActivity = new UserActivityWindow(true);
+							userActivity.setParent(menuWindow);
+							userActivity.doModal();
+							myAcivityMenuitem.setDisabled(false);
+						}
+					}
+				});
+
+		usersAcivityMenuitem = new Menuitem("Users activity");
+		usersAcivityMenuitem.setParent(historyMenupopup);
+		usersAcivityMenuitem.setImage("image/activity.png");
+		usersAcivityMenuitem.addEventListener(Events.ON_CLICK,
+				new EventListener<Event>() {
+					public void onEvent(Event event) {
+						if (!myAcivityMenuitem.isDisabled()) {
+							myAcivityMenuitem.setDisabled(true);
+							UserActivityWindow userActivity = new UserActivityWindow(false);
+							userActivity.setParent(menuWindow);
+							userActivity.doModal();
+							myAcivityMenuitem.setDisabled(false);
+						}
+					}
+				});
+
+		filesMenuitem = new Menuitem("Files history");
+		filesMenuitem.setParent(historyMenupopup);
+		filesMenuitem.setImage("image/activity.png");
 
 		Div themeDiv = new Div();
 		themeDiv.setParent(menuWindow);
@@ -340,6 +389,8 @@ public class MenuWindow extends Window {
 		activityListbox = new Listbox();
 		activityListbox.setMold("paging");
 		activityListbox.setAutopaging(true);
+		activityListbox.setVflex(true);
+		activityListbox.setPagingPosition("bottom");
 		activityListbox.setEmptyMessage("No actifity");
 		activityListbox
 				.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%; height: 600px");
@@ -359,7 +410,7 @@ public class MenuWindow extends Window {
 		Listheader blankListheader = new Listheader();
 		blankListheader.setParent(listhead);
 		blankListheader.setWidth("60px");
-		
+
 		Listheader queryNameListheader = new Listheader("Query name");
 		queryNameListheader.setParent(listhead);
 		queryNameListheader.setSort("auto(queryName)");
@@ -389,10 +440,10 @@ public class MenuWindow extends Window {
 		fileSizeListheader.setParent(listhead);
 		fileSizeListheader.setStyle("text-align: right; padding: 0 25px 0 0;");
 		fileSizeListheader.setSort("auto(fileData.filesize)");
-		
+
 		Auxhead activityAuxhead = new Auxhead();
 		activityAuxhead.setParent(activityListbox);
-		
+
 		Auxheader blankAuxheader = new Auxheader();
 		blankAuxheader.setParent(activityAuxhead);
 
@@ -415,7 +466,7 @@ public class MenuWindow extends Window {
 		Image searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(queryNameAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
+
 		Auxheader queryAuxheader = new Auxheader();
 		queryAuxheader.setParent(activityAuxhead);
 		querySearchingTextbox = new Textbox();
@@ -423,19 +474,19 @@ public class MenuWindow extends Window {
 		querySearchingTextbox.setWidth("75%");
 		querySearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				queryNameSearchingTextbox.setValue("");
-				fileTypeSearchingTextbox.setValue("");
-				createdAtSearchingTextbox.setValue("");
-				doneAtSearchingTextbox.setValue("");
-				fileSizeSearchingTextbox.setValue("");
-				refreshActivityListbox();
-			}
-		});
+					public void onEvent(Event namedSearchEvent) {
+						queryNameSearchingTextbox.setValue("");
+						fileTypeSearchingTextbox.setValue("");
+						createdAtSearchingTextbox.setValue("");
+						doneAtSearchingTextbox.setValue("");
+						fileSizeSearchingTextbox.setValue("");
+						refreshActivityListbox();
+					}
+				});
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(queryAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
+
 		Auxheader fileTypeAuxheader = new Auxheader();
 		fileTypeAuxheader.setParent(activityAuxhead);
 		fileTypeSearchingTextbox = new Textbox();
@@ -443,19 +494,19 @@ public class MenuWindow extends Window {
 		fileTypeSearchingTextbox.setWidth("75%");
 		fileTypeSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				queryNameSearchingTextbox.setValue("");
-				querySearchingTextbox.setValue("");
-				createdAtSearchingTextbox.setValue("");
-				doneAtSearchingTextbox.setValue("");
-				fileSizeSearchingTextbox.setValue("");
-				refreshActivityListbox();
-			}
-		});
+					public void onEvent(Event namedSearchEvent) {
+						queryNameSearchingTextbox.setValue("");
+						querySearchingTextbox.setValue("");
+						createdAtSearchingTextbox.setValue("");
+						doneAtSearchingTextbox.setValue("");
+						fileSizeSearchingTextbox.setValue("");
+						refreshActivityListbox();
+					}
+				});
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(fileTypeAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
+
 		Auxheader createdAtAuxheader = new Auxheader();
 		createdAtAuxheader.setParent(activityAuxhead);
 		createdAtSearchingTextbox = new Textbox();
@@ -463,19 +514,19 @@ public class MenuWindow extends Window {
 		createdAtSearchingTextbox.setWidth("75%");
 		createdAtSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				queryNameSearchingTextbox.setValue("");
-				querySearchingTextbox.setValue("");
-				fileTypeSearchingTextbox.setValue("");
-				doneAtSearchingTextbox.setValue("");
-				fileSizeSearchingTextbox.setValue("");
-				refreshActivityListbox();
-			}
-		});
+					public void onEvent(Event namedSearchEvent) {
+						queryNameSearchingTextbox.setValue("");
+						querySearchingTextbox.setValue("");
+						fileTypeSearchingTextbox.setValue("");
+						doneAtSearchingTextbox.setValue("");
+						fileSizeSearchingTextbox.setValue("");
+						refreshActivityListbox();
+					}
+				});
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(createdAtAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
+
 		Auxheader doneAtAuxheader = new Auxheader();
 		doneAtAuxheader.setParent(activityAuxhead);
 		doneAtSearchingTextbox = new Textbox();
@@ -483,22 +534,22 @@ public class MenuWindow extends Window {
 		doneAtSearchingTextbox.setWidth("75%");
 		doneAtSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				queryNameSearchingTextbox.setValue("");
-				querySearchingTextbox.setValue("");
-				fileTypeSearchingTextbox.setValue("");
-				createdAtSearchingTextbox.setValue("");
-				fileSizeSearchingTextbox.setValue("");
-				refreshActivityListbox();
-			}
-		});
+					public void onEvent(Event namedSearchEvent) {
+						queryNameSearchingTextbox.setValue("");
+						querySearchingTextbox.setValue("");
+						fileTypeSearchingTextbox.setValue("");
+						createdAtSearchingTextbox.setValue("");
+						fileSizeSearchingTextbox.setValue("");
+						refreshActivityListbox();
+					}
+				});
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(doneAtAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
+
 		blankAuxheader = new Auxheader();
 		blankAuxheader.setParent(activityAuxhead);
-		
+
 		Auxheader fileSizeAuxheader = new Auxheader();
 		fileSizeAuxheader.setParent(activityAuxhead);
 		fileSizeSearchingTextbox = new Textbox();
@@ -506,15 +557,15 @@ public class MenuWindow extends Window {
 		fileSizeSearchingTextbox.setWidth("75%");
 		fileSizeSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				queryNameSearchingTextbox.setValue("");
-				querySearchingTextbox.setValue("");
-				fileTypeSearchingTextbox.setValue("");
-				createdAtSearchingTextbox.setValue("");
-				doneAtSearchingTextbox.setValue("");
-				refreshActivityListbox();
-			}
-		});
+					public void onEvent(Event namedSearchEvent) {
+						queryNameSearchingTextbox.setValue("");
+						querySearchingTextbox.setValue("");
+						fileTypeSearchingTextbox.setValue("");
+						createdAtSearchingTextbox.setValue("");
+						doneAtSearchingTextbox.setValue("");
+						refreshActivityListbox();
+					}
+				});
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(fileSizeAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
@@ -531,15 +582,19 @@ public class MenuWindow extends Window {
 				criteria.add(Restrictions.eq("userCreated", _user));
 			}
 			if (!queryNameSearchingTextbox.getValue().isEmpty()) {
-				criteria.add(Restrictions.like("queryName", queryNameSearchingTextbox.getValue()+"%").ignoreCase());
+				criteria.add(Restrictions.like("queryName",
+						queryNameSearchingTextbox.getValue() + "%")
+						.ignoreCase());
 			} else if (!querySearchingTextbox.getValue().isEmpty()) {
-				criteria.add(Restrictions.like("query", querySearchingTextbox.getValue()+"%").ignoreCase());
+				criteria.add(Restrictions.like("query",
+						querySearchingTextbox.getValue() + "%").ignoreCase());
 			} else if (!fileTypeSearchingTextbox.getValue().isEmpty()) {
-				criteria.add(Restrictions.like("filetype", fileTypeSearchingTextbox.getValue()+"%").ignoreCase());
+				criteria.add(Restrictions.like("filetype",
+						fileTypeSearchingTextbox.getValue() + "%").ignoreCase());
 			} else if (!createdAtSearchingTextbox.getValue().isEmpty()) {
-				Timestamp basic = serviceMain
-						.convertToTimeStamp("dd/MM/yyyy HH:mm",
-								createdAtSearchingTextbox.getValue());
+				Timestamp basic = serviceMain.convertToTimeStamp(
+						"dd/MM/yyyy HH:mm",
+						createdAtSearchingTextbox.getValue());
 				if (basic == null) {
 					Timestamp lowTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy", createdAtSearchingTextbox.getValue());
@@ -556,17 +611,16 @@ public class MenuWindow extends Window {
 							highTimestamp));
 				}
 			} else if (!doneAtSearchingTextbox.getValue().isEmpty()) {
-				Timestamp basic = serviceMain
-						.convertToTimeStamp("dd/MM/yyyy HH:mm",
-								doneAtSearchingTextbox.getValue());
+				Timestamp basic = serviceMain.convertToTimeStamp(
+						"dd/MM/yyyy HH:mm", doneAtSearchingTextbox.getValue());
 				if (basic == null) {
 					Timestamp lowTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy", doneAtSearchingTextbox.getValue());
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
 							doneAtSearchingTextbox.getValue() + " 23:59:59");
-					criteria.add(Restrictions.between("doneAt",
-							lowTimestamp, highTimestamp));
+					criteria.add(Restrictions.between("doneAt", lowTimestamp,
+							highTimestamp));
 				} else {
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
@@ -576,16 +630,17 @@ public class MenuWindow extends Window {
 				}
 			} else if (!fileSizeSearchingTextbox.getValue().isEmpty()) {
 				criteria.createCriteria("fileData", "fileData");
-				criteria.add(Restrictions.like("fileData.filesizeToShow", fileSizeSearchingTextbox.getValue()+"%").ignoreCase());
+				criteria.add(Restrictions.like("fileData.filesizeToShow",
+						fileSizeSearchingTextbox.getValue() + "%").ignoreCase());
 			}
-			
-			if (criteria.list().size() > 0 && activityListbox.getParent() == null) {
+
+			if (criteria.list().size() > 0
+					&& activityListbox.getParent() == null) {
 				activityListbox.setParent(vlayout);
 			}
-			
+
 			activityListbox.setModel(new ListModelList<Activity>(
 					(List<Activity>) criteria.list()));
-			
 
 			if (_user.getDivisi().equalsIgnoreCase("admin")) {
 				criteria = sessionSelect.createCriteria(FileSizeTotal.class);
@@ -646,10 +701,14 @@ public class MenuWindow extends Window {
 				usersMenuitem.setVisible(true);
 				queryBuilderMenuitem.setVisible(true);
 				queryManagementMenuitem.setVisible(true);
+				usersAcivityMenuitem.setVisible(true);
+				filesMenuitem.setVisible(true);
 			} else {
 				usersMenuitem.setVisible(false);
 				queryBuilderMenuitem.setVisible(false);
 				queryManagementMenuitem.setVisible(false);
+				usersAcivityMenuitem.setVisible(false);
+				filesMenuitem.setVisible(false);
 			}
 			userloginLabel.setValue("Welcome " + _user.getUsername());
 			topAuxheader.setLabel(_user.getUsername() + "'s query activity");
@@ -664,25 +723,32 @@ public class MenuWindow extends Window {
 		@Override
 		public void render(Listitem listitem, Activity activity, int index)
 				throws Exception {
-			
+
 			Listcell getListcell = new Listcell();
 			getListcell.setParent(listitem);
-			ButtonCustom gearButton = new ButtonCustom("image/gear.png", activity);
+			ButtonCustom gearButton = new ButtonCustom("image/gear.png",
+					activity);
 			gearButton.setParent(getListcell);
 			gearButton.addEventListener(Events.ON_CLICK,
 					new EventListener<Event>() {
-				public void onEvent(Event gearEvent) {
-					ButtonCustom buttonCustom = (ButtonCustom) gearEvent.getTarget();
-					ActivityDetailWindow activityDetailWindow = new ActivityDetailWindow((Activity) buttonCustom.getDataObject());
-					activityDetailWindow.setParent(menuWindow);
-					activityDetailWindow.doModal();
-					
-					if (activityDetailWindow.isRefreshActivity()) {
-						refreshActivityListbox();
-					}
-				}
-			});
-			
+						public void onEvent(Event gearEvent) {
+							ButtonCustom buttonCustom = (ButtonCustom) gearEvent
+									.getTarget();
+							if (!buttonCustom.isDisabled()) {
+								buttonCustom.setDisabled(true);
+								ActivityDetailWindow activityDetailWindow = new ActivityDetailWindow(
+										(Activity) buttonCustom.getDataObject());
+								activityDetailWindow.setParent(menuWindow);
+								activityDetailWindow.doModal();
+
+								if (activityDetailWindow.isRefreshActivity()) {
+									refreshActivityListbox();
+								}
+								buttonCustom.setDisabled(false);
+							}
+						}
+					});
+
 			listitem.appendChild(new Listcell(activity.getQueryName()));
 			String query = activity.getQuery();
 			if (query.length() > 25) {
@@ -706,8 +772,7 @@ public class MenuWindow extends Window {
 				if (activity.getFileData() != null) {
 					FilesData filesData = activity.getFileData();
 					File file = new File(serviceMain.getQuery("location."
-							+ filesData.getFiletype()
-									.toLowerCase())
+							+ filesData.getFiletype().toLowerCase())
 							+ "/" + filesData.getFilename());
 					if (file.isFile()) {
 						Listcell downloadListcell = new Listcell();
@@ -722,7 +787,8 @@ public class MenuWindow extends Window {
 												.getTarget();
 										Activity activitySelected = (Activity) buttonSelectedButtonCustom
 												.getDataObject();
-										FilesData filesDataSelected = activitySelected.getFileData();
+										FilesData filesDataSelected = activitySelected
+												.getFileData();
 										File file = new File(serviceMain
 												.getQuery("location."
 														+ filesDataSelected
@@ -745,7 +811,8 @@ public class MenuWindow extends Window {
 								});
 						downloadButtonCustom.setParent(downloadListcell);
 
-						Listcell fileSizeListcell = new Listcell(filesData.getFilesizeToShow());
+						Listcell fileSizeListcell = new Listcell(
+								filesData.getFilesizeToShow());
 						fileSizeListcell.setParent(listitem);
 						fileSizeListcell
 								.setStyle("text-align: right; padding: 0 25px 0 0;");

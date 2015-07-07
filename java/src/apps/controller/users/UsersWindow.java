@@ -192,7 +192,7 @@ public class UsersWindow extends Window {
 					Messagebox.ERROR);
 		}
 		columns.appendChild(divisiColumn);
-		
+
 		Column emailColumn = new Column("Email");
 		try {
 			emailColumn.setSort("auto(email)");
@@ -281,7 +281,7 @@ public class UsersWindow extends Window {
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(divisiAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
-		
+
 		Auxheader emailAuxheader = new Auxheader();
 		emailAuxheader.setParent(auxhead);
 		emailSearchingTextbox = new Textbox();
@@ -289,12 +289,12 @@ public class UsersWindow extends Window {
 		emailSearchingTextbox.setWidth("75%");
 		emailSearchingTextbox.addEventListener(Events.ON_OK,
 				new EventListener<Event>() {
-			public void onEvent(Event namedSearchEvent) {
-				usernameSearchingTextbox.setValue("");
-				divisiSearchingTextbox.setValue("");
-				refreshGrid();
-			}
-		});
+					public void onEvent(Event namedSearchEvent) {
+						usernameSearchingTextbox.setValue("");
+						divisiSearchingTextbox.setValue("");
+						refreshGrid();
+					}
+				});
 		searchImage = new Image("image/small_search_icon.png");
 		searchImage.setParent(emailAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
@@ -346,7 +346,7 @@ public class UsersWindow extends Window {
 									((Label) editRow.getChildren().get(4))
 											.setValue(userFromModal.getDivisi());
 									((Label) editRow.getChildren().get(5))
-									.setValue(userFromModal.getEmail());
+											.setValue(userFromModal.getEmail());
 								}
 
 								updateEventButton.setDisabled(false);
@@ -383,7 +383,10 @@ public class UsersWindow extends Window {
 												Transaction trx = session
 														.beginTransaction();
 												session.delete(userEvent);
-												serviceMain.saveUserActivity("Username "+userEvent.getUsername()+" deleted");
+												serviceMain.saveUserActivity("Username "
+														+ userEvent
+																.getUsername()
+														+ " deleted");
 												trx.commit();
 											} catch (Exception e) {
 												logger.error(e.getMessage(), e);
@@ -428,17 +431,20 @@ public class UsersWindow extends Window {
 						public void onEvent(Event gearEvent) {
 							ButtonCustom buttonSelected = (ButtonCustom) gearEvent
 									.getTarget();
+							if (!buttonSelected.isDisabled()) {
+								buttonSelected.setDisabled(true);
+								Users userSelected = (Users) buttonSelected
+										.getDataObject();
 
-							Users userSelected = (Users) buttonSelected
-									.getDataObject();
+								QueryListForUSers queryListForUSers = new QueryListForUSers(
+										"User " + userSelected.getUsername()
+												+ " properties", userSelected);
+								queryListForUSers.setParent(singleWindow);
+								queryListForUSers.doModal();
 
-							QueryListForUSers queryListForUSers = new QueryListForUSers(
-									"User " + userSelected.getUsername()
-											+ " properties", userSelected);
-							queryListForUSers.setParent(singleWindow);
-							queryListForUSers.doModal();
-
-							refreshGrid();
+								refreshGrid();
+								buttonSelected.setDisabled(false);
+							}
 						}
 					});
 

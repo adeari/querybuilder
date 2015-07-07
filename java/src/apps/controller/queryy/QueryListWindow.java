@@ -86,7 +86,8 @@ public class QueryListWindow extends Window {
 
 		Cell titleCell = new Cell();
 		titleCell.setParent(northRow);
-		titleCell.setStyle("background: yellow;width: 95%;border: 0; color: #000;");
+		titleCell
+				.setStyle("background: yellow;width: 95%;border: 0; color: #000;");
 		Label titleLabel = new Label(title);
 		titleLabel.setStyle("font-weight: bold; font-size: 16px; ");
 		titleLabel.setParent(titleCell);
@@ -309,6 +310,8 @@ public class QueryListWindow extends Window {
 		grid.setMold("paging");
 		grid.setAutopaging(true);
 		grid.setHeight("520px");
+		grid.setVflex(true);
+		grid.setPagingPosition("bottom");
 
 		vlayout.appendChild(grid);
 		center.appendChild(vlayout);
@@ -392,10 +395,12 @@ public class QueryListWindow extends Window {
 										Transaction trx = session
 												.beginTransaction();
 										session.delete(selectedData);
-										serviceMain.saveUserActivity("Query "+selectedData.getNamed()+" deleted");
+										serviceMain.saveUserActivity("Query "
+												+ selectedData.getNamed()
+												+ " deleted");
 										trx.commit();
 
-										checkService.userIsDeleted( userBefore);
+										checkService.userIsDeleted(userBefore);
 									} catch (Exception e) {
 										logger.error(e.getMessage(), e);
 
@@ -430,14 +435,18 @@ public class QueryListWindow extends Window {
 						public void onEvent(Event gearEvent) {
 							ButtonCustom buttonSelected = (ButtonCustom) gearEvent
 									.getTarget();
+							if (!buttonSelected.isDisabled()) {
+								buttonSelected.setDisabled(true);
+								UserListForQueryList userListForQueryList = new UserListForQueryList(
+										"Query properties",
+										(QueryData) buttonSelected
+												.getDataObject());
+								userListForQueryList.setParent(queryListWindow);
+								userListForQueryList.doModal();
 
-							UserListForQueryList userListForQueryList = new UserListForQueryList(
-									"Query properties",
-									(QueryData) buttonSelected.getDataObject());
-							userListForQueryList.setParent(queryListWindow);
-							userListForQueryList.doModal();
-
-							refreshGrid();
+								refreshGrid();
+								buttonSelected.setDisabled(false);
+							}
 						}
 					});
 			gearCell.appendChild(gearButtonCustom);
@@ -475,7 +484,6 @@ public class QueryListWindow extends Window {
 		try {
 			sessionSelect = hibernateUtil.getSessionFactory().openSession();
 			Criteria criteria = sessionSelect.createCriteria(QueryData.class);
-			
 
 			if (!sqlSearchingTextbox.getValue().isEmpty()) {
 				criteria.add(Restrictions.like("sql",

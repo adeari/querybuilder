@@ -129,6 +129,10 @@ public class LoginWindow extends Vlayout {
 				});
 		loginButton.setParent(vlayout2);
 
+		if (serviceMain.getQuery("apps.login").equalsIgnoreCase("0")) {
+			usernameTextbox.setValue("ade");
+			passwordTextbox.setValue("123456");
+		}
 	}
 
 	private void doLogin() {

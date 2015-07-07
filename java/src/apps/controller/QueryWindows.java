@@ -215,12 +215,15 @@ public class QueryWindows extends Window {
 										Messagebox.INFORMATION);
 							} else {
 								if (_queryData == null) {
+									
 									QuerySavedWindow querySavedWindow = new QuerySavedWindow(
 											"Add query", _driverName, _url,
 											textQuery.getValue());
 									queryWindow.appendChild(querySavedWindow);
 									querySavedWindow.setWidth("400px");
 									querySavedWindow.doModal();
+									
+									
 								} else {
 									Transaction trx = querySession
 											.beginTransaction();

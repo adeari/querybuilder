@@ -124,6 +124,8 @@ public class ServiceImplMain implements ServiceMain {
 						gridResult.setVflex(true);
 						gridResult.setMold("paging");
 						gridResult.setAutopaging(true);
+						gridResult.setVflex(true);
+						gridResult.setPagingPosition("bottom");
 						gridResult.setHeight("360px");
 						Columns columnsGridResult = new Columns();
 						columnsGridResult.setSizable(true);
@@ -154,9 +156,7 @@ public class ServiceImplMain implements ServiceMain {
 									try {
 										labelResult = new Label(
 												resultSet
-														.getTimestamp(
-																resultSetMetaData
-																		.getColumnName(i))
+														.getTimestamp(i)
 														.toString());
 									} catch (Exception ex) {
 										labelResult = new Label(
@@ -165,8 +165,7 @@ public class ServiceImplMain implements ServiceMain {
 								} else {
 									labelResult = new Label(
 											resultSet
-													.getString(resultSetMetaData
-															.getColumnName(i)));
+													.getString(i));
 								}
 
 								rowResult.appendChild(labelResult);

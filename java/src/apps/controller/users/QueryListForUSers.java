@@ -88,6 +88,8 @@ public class QueryListForUSers extends Window {
 		listbox.setHeight("500px");
 		listbox.setMold("paging");
 		listbox.setAutopaging(true);
+		listbox.setVflex(true);
+		listbox.setPagingPosition("bottom");
 		listbox.setCheckmark(true);
 		listbox.setItemRenderer(new MyItemRenderer());
 		listbox.setAttribute("onCheckSelectAll", true);

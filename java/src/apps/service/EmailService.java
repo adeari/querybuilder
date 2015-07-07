@@ -55,7 +55,7 @@ public class EmailService {
 			Multipart mp = new MimeMultipart();
 
 			MimeBodyPart htmlPart = new MimeBodyPart();
-			htmlPart.setContent(emailObject.getDescription(), "text/html");
+			htmlPart.setContent(emailObject.getDescription().replaceAll("\n", "<br/>"), "text/html");
 			mp.addBodyPart(htmlPart);
 			message.setContent(mp);
 

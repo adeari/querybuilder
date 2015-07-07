@@ -23,6 +23,7 @@ import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
 import apps.beans.EmailObject;
+import apps.controller.users.UserEmailWindow;
 import apps.entity.Activity;
 import apps.entity.FilesData;
 import apps.service.EmailService;
@@ -43,6 +44,7 @@ public class ActivityDetailWindow extends Window {
 	private Window window;
 	private Textbox descriptionTextbox;
 	private Textbox emailToTextbox;
+	private Button searchUserEmailButton;
 
 	public ActivityDetailWindow(Activity activity) {
 		super("Query activity detail management", null, true);
@@ -167,12 +169,11 @@ public class ActivityDetailWindow extends Window {
 					: (":" + Executions.getCurrent().getServerPort());
 			String url = Executions.getCurrent().getScheme() + "://"
 					+ Executions.getCurrent().getServerName() + port
-					+ Executions.getCurrent().getContextPath()
-					+ Executions.getCurrent().getDesktop().getRequestPath();
+					+ Executions.getCurrent().getContextPath();
 
 			Cell linkDownloadCellTextbox = new Cell();
 			linkDownloadCellTextbox.setParent(linkDownloadRow);
-			Textbox linkDownloadTextbox = new Textbox(url + "/download/file/"
+			Textbox linkDownloadTextbox = new Textbox(url + "/download/file?ridfil="
 					+ _activity.getFileData().getDownloadLink());
 			linkDownloadTextbox.setParent(linkDownloadCellTextbox);
 			linkDownloadTextbox.setStyle("width: 80%;");
@@ -201,11 +202,14 @@ public class ActivityDetailWindow extends Window {
 						public void onEvent(Event pasteEvent) {
 							Textbox textbox = (Textbox) pasteEvent.getTarget()
 									.getParent().getChildren().get(0);
+							String link = "<a href=\""
+								+ textbox.getValue()
+								+ "\" target=\"_blank\" style=\"cursor:pointer;\">Download</a>";
 							if (descriptionTextbox.getValue().isEmpty()) {
-								descriptionTextbox.setValue(textbox.getValue());
+								descriptionTextbox.setValue(link);
 							} else {
 								descriptionTextbox.setValue(descriptionTextbox
-										.getValue() + "\n" + textbox.getValue());
+										.getValue() + "\n" + link);
 							}
 						}
 					});
@@ -222,9 +226,24 @@ public class ActivityDetailWindow extends Window {
 			emailToTextbox = new Textbox();
 			emailToTextbox.setParent(emailToTextboxCell);
 			emailToTextbox.setStyle("width: 80%;");
-			Button searchUserEmailButton = new Button();
+			searchUserEmailButton = new Button();
 			searchUserEmailButton.setParent(emailToTextboxCell);
 			searchUserEmailButton.setImage("image/small_search_icon.png");
+			searchUserEmailButton.addEventListener(Events.ON_CLICK,
+					new EventListener<Event>() {
+						public void onEvent(Event searchUserEmailEvent) {
+							if (!searchUserEmailButton.isDisabled()) {
+								searchUserEmailButton.setDisabled(true);
+								UserEmailWindow userEmailWindow = new UserEmailWindow();
+								userEmailWindow.setParent(window);
+								userEmailWindow.doModal();
+								
+								emailToTextbox.setValue(userEmailWindow.getUsersEmail());
+
+								searchUserEmailButton.setDisabled(false);
+							}
+						}
+					});
 
 			Row descriptionRow = new Row();
 			descriptionRow.setParent(sendEmailRows);
@@ -250,16 +269,22 @@ public class ActivityDetailWindow extends Window {
 			sendEmailButton.setParent(sendEmailCell);
 			sendEmailButton.addEventListener(Events.ON_CLICK,
 					new EventListener<Event>() {
-				public void onEvent(Event sendEmailEvent) {
-					if (emailToTextbox.getValue().isEmpty()) {
-						throw new WrongValueException(emailToTextbox, "Enter email");
-					} else if (descriptionTextbox.getValue().isEmpty()) {
-						throw new WrongValueException(descriptionTextbox, "Enter description");
-					}
-					new EmailService(new EmailObject("from@yo.net", emailToTextbox.getValue(), "Query file Download", descriptionTextbox.getValue()));
-					
-				}
-			});
+						public void onEvent(Event sendEmailEvent) {
+							if (emailToTextbox.getValue().isEmpty()) {
+								throw new WrongValueException(emailToTextbox,
+										"Enter email");
+							} else if (descriptionTextbox.getValue().isEmpty()) {
+								throw new WrongValueException(
+										descriptionTextbox, "Enter description");
+							}
+							window.setClosable(false);
+							new EmailService(new EmailObject("from@yo.net",
+									emailToTextbox.getValue(),
+									"Query file Download", descriptionTextbox
+											.getValue()));
+							window.setClosable(true);
+						}
+					});
 		}
 	}
 

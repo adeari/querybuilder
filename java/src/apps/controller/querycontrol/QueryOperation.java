@@ -45,20 +45,25 @@ public class QueryOperation extends Window {
 	public QueryOperation(String title) {
 		super(title, null, true);
 		window = this;
+		window.setMaximizable(true);
+		window.setMaximized(true);
+		
 		
 		Session session = Sessions.getCurrent();
 		_user = (Users) session.getAttribute("userlogin");
 
 		listbox = new Listbox();
-		listbox.setHeight("600px");
 		listbox.setMold("paging");
 		listbox.setAutopaging(true);
 		listbox.setMultiple(false);
 		listbox.setEmptyMessage("Query empty");
 		listbox.setParent(window);
+		listbox.setVflex(true);
+		listbox.setPagingPosition("bottom");
 
 		Listhead listhead = new Listhead();
 		listhead.setParent(listbox);
+		listhead.setSizable(true);
 
 		Listheader listheader = new Listheader();
 		listheader.setParent(listhead);
@@ -177,11 +182,14 @@ public class QueryOperation extends Window {
 			buttonCustom.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 				public void onEvent(Event buttonCustomEvent) {
 					ButtonCustom buttonSelectedButtonCustom = (ButtonCustom) buttonCustomEvent.getTarget();
-					QueryData queryDataSelected = (QueryData) buttonSelectedButtonCustom.getDataObject();
-					QueryTask queryTask = new QueryTask(queryDataSelected);
-					queryTask.setParent(window);
-					queryTask.doModal();
-					
+					if (!buttonSelectedButtonCustom.isDisabled()) {
+						buttonSelectedButtonCustom.setDisabled(true);
+						QueryData queryDataSelected = (QueryData) buttonSelectedButtonCustom.getDataObject();
+						QueryTask queryTask = new QueryTask(queryDataSelected);
+						queryTask.setParent(window);
+						queryTask.doModal();
+						buttonSelectedButtonCustom.setDisabled(false);
+					}
 				}
 			});
 			item.appendChild(new Listcell(queryData.getNamed()));
