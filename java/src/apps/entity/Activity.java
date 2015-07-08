@@ -3,6 +3,7 @@ package apps.entity;
 import static javax.persistence.GenerationType.IDENTITY;
 
 import java.io.Serializable;
+import java.sql.Time;
 import java.sql.Timestamp;
 
 import javax.persistence.Column;
@@ -54,6 +55,30 @@ public class Activity implements Serializable {
 	
 	@Column(name = "connection_string", nullable = false)
 	private String connectionString;
+	
+	@Column(name = "start_at")
+	private Timestamp startAt;
+	
+	@Column(name = "memory_used")
+	private Long memoryUsed;
+	
+	@Column(name = "memory_max")
+	private Long memoryMax;
+	
+	@Column(name = "show_memory_used")
+	private String showMemoryUsed;
+	
+	@Column(name = "show_memory_max")
+	private String showMemoryMax;
+	
+	@Column(name = "show_duration")
+	private String showDuration;
+	
+	@Column(name = "duration_time")
+	private Time durationTime;
+	
+	
+	
 	
 	public Activity(String queryName1, String query1, Users userCreated1, String filetype1, String driver1, String connectionString1) {
 		query = query1;
@@ -158,4 +183,61 @@ public class Activity implements Serializable {
 		this.connectionString = connectionString;
 	}
 
+	public Timestamp getStartAt() {
+		return startAt;
+	}
+
+	public void setStartAt(Timestamp startAt) {
+		this.startAt = startAt;
+	}
+
+	public Long getMemoryUsed() {
+		return memoryUsed;
+	}
+
+	public void setMemoryUsed(Long memoryUsed) {
+		this.memoryUsed = memoryUsed;
+	}
+
+	public Long getMemoryMax() {
+		return memoryMax;
+	}
+
+	public void setMemoryMax(Long memoryMax) {
+		this.memoryMax = memoryMax;
+	}
+
+	public String getShowMemoryUsed() {
+		return showMemoryUsed;
+	}
+
+	public void setShowMemoryUsed(String showMemoryUsed) {
+		this.showMemoryUsed = showMemoryUsed;
+	}
+
+	public String getShowMemoryMax() {
+		return showMemoryMax;
+	}
+
+	public void setShowMemoryMax(String showMemoryMax) {
+		this.showMemoryMax = showMemoryMax;
+	}
+
+	public String getShowDuration() {
+		return showDuration;
+	}
+
+	public void setShowDuration(String showDuration) {
+		this.showDuration = showDuration;
+	}
+
+	public Time getDurationTime() {
+		return durationTime;
+	}
+
+	public void setDurationTime(Time durationTime) {
+		this.durationTime = durationTime;
+	}
+
+	
 }

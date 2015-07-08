@@ -133,13 +133,8 @@ public class ExcelHelper {
 				serviceMain.updateActivity(_id, null, null, e.getMessage(),
 						advancedObject);
 			} finally {
-				if (resultSet != null) {
-					try {
-						resultSet.close();
-						resultSet = null;
-					} catch (SQLException e) {
-					}
-				}
+				resultSet.close();
+				preparedStatement.close();
 			}
 
 		} catch (IOException e) {

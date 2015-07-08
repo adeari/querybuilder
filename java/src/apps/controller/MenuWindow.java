@@ -41,6 +41,7 @@ import org.zkoss.zul.Window;
 
 import apps.components.ButtonCustom;
 import apps.controller.activity.ActivityDetailWindow;
+import apps.controller.history.FileHistory;
 import apps.controller.history.UserActivityWindow;
 import apps.controller.querycontrol.QueryOperation;
 import apps.controller.queryy.QueryListWindow;
@@ -307,6 +308,18 @@ public class MenuWindow extends Window {
 		filesMenuitem = new Menuitem("Files history");
 		filesMenuitem.setParent(historyMenupopup);
 		filesMenuitem.setImage("image/activity.png");
+		filesMenuitem.addEventListener(Events.ON_CLICK,
+				new EventListener<Event>() {
+			public void onEvent(Event event) {
+				if (!filesMenuitem.isDisabled()) {
+					filesMenuitem.setDisabled(true);
+					FileHistory fileHistory = new FileHistory();
+					fileHistory.setParent(menuWindow);
+					fileHistory.doModal();
+					filesMenuitem.setDisabled(false);
+				}
+			}
+		});
 
 		Div themeDiv = new Div();
 		themeDiv.setParent(menuWindow);

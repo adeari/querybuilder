@@ -180,6 +180,7 @@ public class QueryWindows extends Window {
 								} else {
 									preparedStatement.executeUpdate();
 								}
+								preparedStatement.close();
 							} catch (Exception e) {
 								logger.error(e.getMessage(), e);
 								Messagebox.show("Query syntax was wrong",
@@ -747,6 +748,7 @@ public class QueryWindows extends Window {
 						} catch (Exception ex) {
 							logger.error(ex.getMessage(), ex);
 						} finally {
+							preparedStatement.close();
 							if (resultSetColumn != null) {
 								try {
 									resultSetColumn.close();

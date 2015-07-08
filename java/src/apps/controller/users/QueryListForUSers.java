@@ -101,9 +101,9 @@ public class QueryListForUSers extends Window {
 						if (listitems.size() > 0) {
 							Session session = null;
 							try {
-
 								session = hibernateUtil.getSessionFactory()
 										.openSession();
+								Transaction trx = session.beginTransaction();
 								String message = "";
 								for (Listitem itemSelected : listitems) {
 									ListcellCustomize listcellCustomize = (ListcellCustomize) itemSelected
@@ -122,25 +122,26 @@ public class QueryListForUSers extends Window {
 											&& criteria.list().size() == 0) {
 										UsersQuery usersQuery = new UsersQuery(
 												_user, queryData);
-										Transaction trx = session
-												.beginTransaction();
+
 										session.save(usersQuery);
 										queryData.setDeleted(false);
 										session.update(queryData);
-										trx.commit();
-										message += "Add access from user "+_user.getUsername()+" in "+queryData.getNamed();
+										message += "Add access from user "
+												+ _user.getUsername() + " in "
+												+ queryData.getNamed();
 									} else if (!itemSelected.isSelected()
 											&& criteria.list().size() > 0) {
 										UsersQuery usersQuery = (UsersQuery) criteria
 												.uniqueResult();
-										Transaction trx = session
-												.beginTransaction();
 										session.delete(usersQuery);
-										trx.commit();
+
 										checkService.queryIsDeleted(queryData);
-										message += "Remove access from user "+_user.getUsername()+" in "+queryData.getNamed();
+										message += "Remove access from user "
+												+ _user.getUsername() + " in "
+												+ queryData.getNamed();
 									}
 								}
+								trx.commit();
 								checkService.userIsDeleted(_user);
 								serviceMain.saveUserActivity(message);
 							} catch (Exception e) {
@@ -284,7 +285,10 @@ public class QueryListForUSers extends Window {
 							queryData.setDeleted(false);
 							session.update(queryData);
 							trx.commit();
-							serviceMain.saveUserActivity("Add access from user "+_user.getUsername()+" in "+queryData.getNamed());
+							serviceMain
+									.saveUserActivity("Add access from user "
+											+ _user.getUsername() + " in "
+											+ queryData.getNamed());
 						} else if (!itemSelected.isSelected()
 								&& criteria.list().size() > 0) {
 							UsersQuery usersQuery = (UsersQuery) criteria
@@ -294,7 +298,11 @@ public class QueryListForUSers extends Window {
 							trx.commit();
 							checkService.queryIsDeleted(queryData);
 							checkService.userIsDeleted(_user);
-							serviceMain.saveUserActivity("Remove access from user "+_user.getUsername()+" in "+queryData.getNamed());
+							serviceMain
+									.saveUserActivity("Remove access from user "
+											+ _user.getUsername()
+											+ " in "
+											+ queryData.getNamed());
 						}
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);

@@ -1,9 +1,6 @@
 package apps.controller.activity;
 
-import java.io.File;
-
 import org.apache.log4j.Logger;
-import org.hibernate.Transaction;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -29,7 +26,6 @@ import apps.entity.FilesData;
 import apps.service.EmailService;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
-import apps.service.hibernateUtil;
 
 public class ActivityDetailWindow extends Window {
 	private static final long serialVersionUID = 6685464214209516187L;
@@ -42,6 +38,7 @@ public class ActivityDetailWindow extends Window {
 	public boolean refreshActivity;
 
 	private Window window;
+	private Textbox subjectTextbox;
 	private Textbox descriptionTextbox;
 	private Textbox emailToTextbox;
 	private Button searchUserEmailButton;
@@ -59,7 +56,6 @@ public class ActivityDetailWindow extends Window {
 
 		Grid grid = new Grid();
 		grid.setParent(hbox);
-		grid.setWidth("400px");
 
 		Rows rows = new Rows();
 		rows.setParent(grid);
@@ -89,12 +85,10 @@ public class ActivityDetailWindow extends Window {
 		queryTextbox.setRows(4);
 		queryTextbox.setReadonly(true);
 
-		Foot foot = new Foot();
-		foot.setParent(grid);
-		Footer footer = new Footer();
-		footer.setParent(foot);
+		Row buttonRow = new Row();
+		buttonRow.setParent(rows);
 		Cell footerCell = new Cell();
-		footerCell.setParent(footer);
+		footerCell.setParent(buttonRow);
 		footerCell.setStyle("text-align: center");
 		footerCell.setColspan(2);
 		Button deleteButton = new Button("Delete");
@@ -106,52 +100,88 @@ public class ActivityDetailWindow extends Window {
 								"Question", Messagebox.YES | Messagebox.NO,
 								Messagebox.QUESTION) == Messagebox.YES) {
 							refreshActivity = true;
-							org.hibernate.Session querySession = null;
-							try {
-								querySession = hibernateUtil
-										.getSessionFactory().openSession();
-
-								if (_activity.getFileData() != null) {
-									FilesData filesData = _activity
-											.getFileData();
-									File file = new File(serviceMain
-											.getQuery("location."
-													+ filesData.getFiletype()
-															.toLowerCase())
-											+ "/" + filesData.getFilename());
-									if (file.isFile()) {
-										file.delete();
-									}
-									Transaction trx = querySession
-											.beginTransaction();
-									querySession.delete(filesData);
-									trx.commit();
-								}
-								Transaction trx = querySession
-										.beginTransaction();
-								querySession.delete(_activity);
-								trx.commit();
-
-							} catch (Exception e) {
-								logger.error(e.getMessage(), e);
-							} finally {
-								if (querySession != null) {
-									try {
-										querySession.close();
-									} catch (Exception e) {
-										logger.error(e.getMessage(), e);
-									}
-								}
-							}
+							serviceMain
+									.saveUserActivity("Delete activity with query name "
+											+ _activity.getQueryName());
+							serviceMain.deleteActivity(_activity);
 							detach();
 						}
 					}
 				});
 
 		if (_activity.getFileData() != null) {
+			FilesData filesData = _activity.getFileData();
+			
+			Grid fileInfo = new Grid();
+			fileInfo.setParent(hbox);
+			fileInfo.setWidth("300px");
+			
+			Rows fileInfoRows = new Rows();
+			fileInfoRows.setParent(fileInfo);
+			
+			Row fileSizeRow = new Row();
+			fileSizeRow.setParent(fileInfoRows);
+			Cell filseSizeCell = new Cell();
+			filseSizeCell.setParent(fileSizeRow);
+			filseSizeCell.setWidth("170px");
+			Label fileSizeLabel = new Label("File size");
+			fileSizeLabel.setParent(filseSizeCell);
+			Textbox filseSizeTextbox = new Textbox(filesData.getFilesizeToShow());
+			filseSizeTextbox.setParent(fileSizeRow);
+			filseSizeTextbox.setReadonly(true);
+			
+			Row memoryUsedSizeRow = new Row();
+			memoryUsedSizeRow.setParent(fileInfoRows);
+			Label memoryUsedLabel = new Label("Memory use");
+			memoryUsedLabel.setParent(memoryUsedSizeRow);
+			Textbox memoryUsedTextbox = new Textbox(_activity.getShowMemoryUsed());
+			memoryUsedTextbox.setParent(memoryUsedSizeRow);
+			memoryUsedTextbox.setReadonly(true);
+			
+			Row memoryMaxSizeRow = new Row();
+			memoryMaxSizeRow.setParent(fileInfoRows);
+			Label memoryMaxLabel = new Label("Memory max");
+			memoryMaxLabel.setParent(memoryMaxSizeRow);
+			Textbox memoryMaxTextbox = new Textbox(_activity.getShowMemoryMax());
+			memoryMaxTextbox.setParent(memoryMaxSizeRow);
+			memoryMaxTextbox.setReadonly(true);
+			
+			Row durationRow = new Row();
+			durationRow.setParent(fileInfoRows);
+			Label durationLabel = new Label("Duration");
+			durationLabel.setParent(durationRow);
+			Textbox durationTextbox = new Textbox(_activity.getShowDuration());
+			durationTextbox.setParent(durationRow);
+			durationTextbox.setReadonly(true);
+			
+			Row startAtRow = new Row();
+			startAtRow.setParent(fileInfoRows);
+			Label startAtLabel = new Label("Process start");
+			startAtLabel.setParent(startAtRow);
+			Textbox startAtTextbox = new Textbox(serviceMain.convertStringFromDate("dd/MM/yyyy", _activity.getStartAt()));
+			startAtTextbox.setParent(startAtRow);
+			startAtTextbox.setReadonly(true);
+			
+			Row doneAtRow = new Row();
+			doneAtRow.setParent(fileInfoRows);
+			Label doneAtLabel = new Label("Process end");
+			doneAtLabel.setParent(doneAtRow);
+			Textbox doneAtTextbox = new Textbox(serviceMain.convertStringFromDate("dd/MM/yyyy", _activity.getDoneAt()));
+			doneAtTextbox.setParent(doneAtRow);
+			doneAtTextbox.setReadonly(true);
+			
+			Row createdAtRow = new Row();
+			createdAtRow.setParent(fileInfoRows);
+			Label createdAtLabel = new Label("Created at");
+			createdAtLabel.setParent(createdAtRow);
+			Textbox createdAtTextbox = new Textbox(serviceMain.convertStringFromDate("dd/MM/yyyy", _activity.getCreatedAt()));
+			createdAtTextbox.setParent(createdAtRow);
+			createdAtTextbox.setReadonly(true);
+			
+			
+			
 			Grid sendEmailGrid = new Grid();
 			sendEmailGrid.setParent(hbox);
-			sendEmailGrid.setWidth("400px");
 
 			Rows sendEmailRows = new Rows();
 			sendEmailRows.setParent(sendEmailGrid);
@@ -173,8 +203,9 @@ public class ActivityDetailWindow extends Window {
 
 			Cell linkDownloadCellTextbox = new Cell();
 			linkDownloadCellTextbox.setParent(linkDownloadRow);
-			Textbox linkDownloadTextbox = new Textbox(url + "/download/file?ridfil="
-					+ _activity.getFileData().getDownloadLink());
+			Textbox linkDownloadTextbox = new Textbox(url
+					+ "/download/file?ridfil="
+					+ filesData.getDownloadLink());
 			linkDownloadTextbox.setParent(linkDownloadCellTextbox);
 			linkDownloadTextbox.setStyle("width: 80%;");
 			linkDownloadTextbox.setReadonly(true);
@@ -203,8 +234,8 @@ public class ActivityDetailWindow extends Window {
 							Textbox textbox = (Textbox) pasteEvent.getTarget()
 									.getParent().getChildren().get(0);
 							String link = "<a href=\""
-								+ textbox.getValue()
-								+ "\" target=\"_blank\" style=\"cursor:pointer;\">Download</a>";
+									+ textbox.getValue()
+									+ "\" target=\"_blank\" style=\"cursor:pointer;\">Download</a>";
 							if (descriptionTextbox.getValue().isEmpty()) {
 								descriptionTextbox.setValue(link);
 							} else {
@@ -237,14 +268,27 @@ public class ActivityDetailWindow extends Window {
 								UserEmailWindow userEmailWindow = new UserEmailWindow();
 								userEmailWindow.setParent(window);
 								userEmailWindow.doModal();
-								
-								emailToTextbox.setValue(userEmailWindow.getUsersEmail());
+
+								emailToTextbox.setValue(userEmailWindow
+										.getUsersEmail());
 
 								searchUserEmailButton.setDisabled(false);
 							}
 						}
 					});
 
+			Row subjectRow = new Row();
+			subjectRow.setParent(sendEmailRows);
+			Cell subjectCell = new Cell();
+			subjectCell.setParent(subjectRow);
+			subjectCell.setStyle("vertical-align: top");
+			Label subjectLabel = new Label("Email subject");
+			subjectLabel.setParent(subjectCell);
+			subjectTextbox = new Textbox();
+			subjectTextbox.setParent(subjectRow);
+			subjectTextbox.setStyle("width: 100%;");
+			
+			
 			Row descriptionRow = new Row();
 			descriptionRow.setParent(sendEmailRows);
 			Cell descriptionCell = new Cell();
@@ -257,12 +301,10 @@ public class ActivityDetailWindow extends Window {
 			descriptionTextbox.setStyle("width: 100%;");
 			descriptionTextbox.setRows(4);
 
-			Foot sendEmailFoot = new Foot();
-			sendEmailFoot.setParent(sendEmailGrid);
-			Footer sendEmailFooter = new Footer();
-			sendEmailFooter.setParent(sendEmailFoot);
+			Row sendEmailRow = new Row();
+			sendEmailRow.setParent(sendEmailRows);
 			Cell sendEmailCell = new Cell();
-			sendEmailCell.setParent(sendEmailFooter);
+			sendEmailCell.setParent(sendEmailRow);
 			sendEmailCell.setStyle("text-align: center");
 			sendEmailCell.setColspan(2);
 			Button sendEmailButton = new Button("Email send");
@@ -273,15 +315,24 @@ public class ActivityDetailWindow extends Window {
 							if (emailToTextbox.getValue().isEmpty()) {
 								throw new WrongValueException(emailToTextbox,
 										"Enter email");
+							} else if (subjectTextbox.getValue().isEmpty()) {
+								throw new WrongValueException(
+										subjectTextbox, "Enter subject");
 							} else if (descriptionTextbox.getValue().isEmpty()) {
 								throw new WrongValueException(
 										descriptionTextbox, "Enter description");
 							}
 							window.setClosable(false);
-							new EmailService(new EmailObject("from@yo.net",
-									emailToTextbox.getValue(),
-									"Query file Download", descriptionTextbox
-											.getValue()));
+							EmailObject emailObject = new EmailObject(
+									"from@yo.net", emailToTextbox.getValue(),
+									subjectTextbox.getValue(), descriptionTextbox
+											.getValue());
+							serviceMain
+									.saveUserActivity("Send email with \nSubject "
+											+ emailObject.getSubject()
+											+ "\nDescription "
+											+ emailObject.getDescription());
+							new EmailService(emailObject);
 							window.setClosable(true);
 						}
 					});

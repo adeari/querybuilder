@@ -111,18 +111,10 @@ public class ServiceMain {
 						isFilename = false;
 					}
 
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
 				} finally {
-					if (resultSet != null) {
-						try {
-							resultSet.close();
-						} catch (SQLException e) {
-							logger.error(" on Close" + e.getMessage(), e);
-						}
-					}
+					preparedStatement.close();
+					resultSet.close();
 				}
-
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			} finally {
@@ -168,18 +160,11 @@ public class ServiceMain {
 						isDownloadLink = false;
 					}
 
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
 				} finally {
-					if (resultSet != null) {
-						try {
-							resultSet.close();
-						} catch (SQLException e) {
-							logger.error(" on Close" + e.getMessage(), e);
-						}
-					}
+					preparedStatement.close();
+					resultSet.close();
 				}
-
+				
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			} finally {
@@ -202,9 +187,13 @@ public class ServiceMain {
 			return "0";
 		final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
 		int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
-		return new DecimalFormat("#,##0.#").format(size
+		String readableString = new DecimalFormat("#,##0.#").format(size
 				/ Math.pow(1024, digitGroups))
 				+ " " + units[digitGroups];
+		readableString = readableString.replace(",", "+");
+		readableString = readableString.replace(".", ",");
+		readableString = readableString.replace("+", ".");
+		return readableString;
 	}
 
 	public String getStringTimeMysql(Date startDate, Date endDate) {
@@ -245,16 +234,16 @@ public class ServiceMain {
 		if (diffDays > 0) {
 			showTime += "" + diffDays;
 			if (diffDays == 1) {
-				showTime += " day";
+				showTime += " day ";
 			} else {
-				showTime += " days";
+				showTime += " days ";
 			}
 		}
 
 		if (diffHours / 10 > 0) {
-			showTime += " " + diffHours;
+			showTime += diffHours;
 		} else {
-			showTime += " 0" + diffHours;
+			showTime += "0" + diffHours;
 		}
 
 		if (diffMinutes / 10 > 0) {
@@ -306,13 +295,13 @@ public class ServiceMain {
 								doneDate));
 
 				preparedStatement.executeUpdate();
-
-				preparedStatement.executeUpdate();
+				preparedStatement.close();
 			} else {
 				PreparedStatement preparedStatement = connection
 						.prepareStatement(
-								"INSERT INTO tb_file (filename, filetype, isdeleted, filesize, filesize_show, download_link) "
-										+ "VALUES (?,?,?,?,?,?)",
+								"INSERT INTO tb_file (filename, filetype, isdeleted, filesize, filesize_show, "
+								+ "download_link, updated_at) "
+										+ "VALUES (?,?,?,?,?,?, now())",
 								Statement.RETURN_GENERATED_KEYS);
 				preparedStatement.setString(1, fileCheck.getName());
 				preparedStatement.setString(2, fileType);
@@ -353,6 +342,7 @@ public class ServiceMain {
 					resultSet.close();
 					isSuccess = true;
 				}
+				preparedStatement.close();
 			}
 
 			PreparedStatement preparedStatement = connection
@@ -391,6 +381,7 @@ public class ServiceMain {
 						emailSubject, emailDescription));
 			}
 			resultSet.close();
+			preparedStatement.close();
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
 		} catch (IllegalAccessException e) {
@@ -410,7 +401,7 @@ public class ServiceMain {
 		}
 
 	}
-	
+
 	public void setTotalFile() {
 		String sql = "SELECT COUNT(*) AS rows FROM tb_filetotal";
 		Connection connection = null;
@@ -433,17 +424,18 @@ public class ServiceMain {
 					preparedStatement.executeUpdate();
 				}
 			}
-			
+
 			sql = "SELECT SUM(filesize) AS summ FROM tb_filetotal";
 			preparedStatement = connection.prepareStatement(sql);
 			resultSet = preparedStatement.executeQuery();
 			if (resultSet.next()) {
 				sql = "UPDATE tb_filetotal SET filesize_show='"
-						+ readableFileSize(resultSet.getLong("summ"))
-						+ "'";
+						+ readableFileSize(resultSet.getLong("summ")) + "'";
 				preparedStatement = connection.prepareStatement(sql);
 				preparedStatement.executeUpdate();
 			}
+			resultSet.close();
+			preparedStatement.close();
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
 		} catch (IllegalAccessException e) {
@@ -471,46 +463,49 @@ public class ServiceMain {
 			connection = DriverManager
 					.getConnection(getPropSetting("database.url"));
 
-				sql = "SELECT COUNT(*) AS rows FROM tb_filesize_used WHERE user_id = "
-						+ userId;
-				PreparedStatement preparedStatement = connection.prepareStatement(sql);
-				ResultSet resultSet = preparedStatement.executeQuery();
-				if (resultSet.next()) {
-					if (resultSet.getLong("rows") > 0) {
+			sql = "SELECT COUNT(*) AS rows FROM tb_filesize_used WHERE user_id = "
+					+ userId;
+			PreparedStatement preparedStatement = connection
+					.prepareStatement(sql);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				if (resultSet.getLong("rows") > 0) {
 
-						sql = "update tb_filesize_used SET filesize = (SELECT SUM(tb_file.filesize) FROM tb_file AS tb_file "
-								+ "INNER JOIN tb_activity AS tb_activity ON tb_file.id = tb_activity.file_id "
-								+ "WHERE tb_activity.user_created_id = "
-								+ userId
-								+ ") WHERE user_id = " + userId;
-						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.executeUpdate();
-					} else {
+					sql = "update tb_filesize_used SET filesize = (SELECT SUM(tb_file.filesize) FROM tb_file AS tb_file "
+							+ "INNER JOIN tb_activity AS tb_activity ON tb_file.id = tb_activity.file_id "
+							+ "WHERE tb_activity.user_created_id = "
+							+ userId
+							+ ") WHERE user_id = " + userId;
+					preparedStatement = connection.prepareStatement(sql);
+					preparedStatement.executeUpdate();
+				} else {
 
-						sql = "INSERT INTO tb_filesize_used (user_id, filesize) VALUES ("
-								+ userId
-								+ ", "
-								+ "(SELECT SUM(tb_file.filesize) FROM tb_file AS tb_file "
-								+ "INNER JOIN tb_activity AS tb_activity ON tb_file.id = tb_activity.file_id "
-								+ "WHERE tb_activity.user_created_id = "
-								+ userId
-								+ "));";
-						preparedStatement = connection.prepareStatement(sql);
-						preparedStatement.executeUpdate();
-					}
-				}
-
-				sql = "SELECT SUM(filesize) AS summ FROM tb_filesize_used WHERE user_id = "+userId;
-				preparedStatement = connection.prepareStatement(sql);
-				resultSet = preparedStatement.executeQuery();
-				if (resultSet.next()) {
-					sql = "UPDATE tb_filesize_used SET filesize_show='"
-							+ readableFileSize(resultSet.getLong("summ"))
-							+ "' WHERE user_id = "+userId;
+					sql = "INSERT INTO tb_filesize_used (user_id, filesize) VALUES ("
+							+ userId
+							+ ", "
+							+ "(SELECT SUM(tb_file.filesize) FROM tb_file AS tb_file "
+							+ "INNER JOIN tb_activity AS tb_activity ON tb_file.id = tb_activity.file_id "
+							+ "WHERE tb_activity.user_created_id = "
+							+ userId
+							+ "));";
 					preparedStatement = connection.prepareStatement(sql);
 					preparedStatement.executeUpdate();
 				}
-				resultSet.close();
+			}
+
+			sql = "SELECT SUM(filesize) AS summ FROM tb_filesize_used WHERE user_id = "
+					+ userId;
+			preparedStatement = connection.prepareStatement(sql);
+			resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				sql = "UPDATE tb_filesize_used SET filesize_show='"
+						+ readableFileSize(resultSet.getLong("summ"))
+						+ "' WHERE user_id = " + userId;
+				preparedStatement = connection.prepareStatement(sql);
+				preparedStatement.executeUpdate();
+			}
+			resultSet.close();
+			preparedStatement.close();
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
 		} catch (IllegalAccessException e) {

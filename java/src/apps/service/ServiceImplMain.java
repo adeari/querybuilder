@@ -1,5 +1,6 @@
 package apps.service;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,12 +12,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
@@ -33,6 +36,8 @@ import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
 
+import apps.entity.Activity;
+import apps.entity.FilesData;
 import apps.entity.UserActivity;
 import apps.entity.Users;
 
@@ -154,18 +159,15 @@ public class ServiceImplMain implements ServiceMain {
 												resultSetMetaData
 														.getColumnClassName(i))) {
 									try {
-										labelResult = new Label(
-												resultSet
-														.getTimestamp(i)
-														.toString());
+										labelResult = new Label(resultSet
+												.getTimestamp(i).toString());
 									} catch (Exception ex) {
 										labelResult = new Label(
 												"0000-00-00 00:00");
 									}
 								} else {
 									labelResult = new Label(
-											resultSet
-													.getString(i));
+											resultSet.getString(i));
 								}
 
 								rowResult.appendChild(labelResult);
@@ -175,30 +177,34 @@ public class ServiceImplMain implements ServiceMain {
 						}
 						rowsResult.setParent(gridResult);
 
-						saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : success");
+						saveUserActivity("Query : " + sql + " \nOn " + url
+								+ " \nResult : success");
 						return (Component) gridResult;
 					} else {
 						Label labelResult = new Label(messageHandle);
-						saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : "+messageHandle);
+						saveUserActivity("Query : " + sql + " \nOn " + url
+								+ " \nResult : " + messageHandle);
 						return labelResult;
 					}
 				} catch (Exception e) {
 					messageHandle = e.getMessage();
 					logger.error(messageHandle, e);
 				} finally {
-					if (resultSet != null) {
-						resultSet.close();
-					}
+					resultSet.close();
+					preparedStatement.close();
 				}
 				Label labelResult = new Label(messageHandle);
-				saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : "+messageHandle);
+				saveUserActivity("Query : " + sql + " \nOn " + url
+						+ " \nResult : " + messageHandle);
 				return labelResult;
 			} else if (sql.toUpperCase().trim().startsWith("DELETE")) {
 				if (Messagebox.show("Are you sure to delete data", "Important",
 						Messagebox.YES | Messagebox.NO, Messagebox.QUESTION) == Messagebox.YES) {
 					preparedStatement.executeUpdate();
 					Label labelResult = new Label("Process Done");
-					saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : success");
+					saveUserActivity("Query : " + sql + " \nOn " + url
+							+ " \nResult : success");
+					preparedStatement.close();
 					return labelResult;
 				} else {
 					Label labelResult = new Label("Nothing");
@@ -207,7 +213,9 @@ public class ServiceImplMain implements ServiceMain {
 			} else {
 				preparedStatement.executeUpdate();
 				Label labelResult = new Label("Process Done");
-				saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : success");
+				saveUserActivity("Query : " + sql + " \nOn " + url
+						+ " \nResult : success");
+				preparedStatement.close();
 				return labelResult;
 			}
 		} catch (Exception ex) {
@@ -223,7 +231,8 @@ public class ServiceImplMain implements ServiceMain {
 			}
 		}
 		Label labelResult = new Label(messageHandle);
-		saveUserActivity("Query : "+sql+" \nOn "+url+" \nResult : "+messageHandle);
+		saveUserActivity("Query : " + sql + " \nOn " + url + " \nResult : "
+				+ messageHandle);
 		return labelResult;
 	}
 
@@ -312,6 +321,18 @@ public class ServiceImplMain implements ServiceMain {
 		}
 	}
 
+	public Time convertToTime(String time) {
+		if (time == null || (time.isEmpty())) {
+			return null;
+		}
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+			return new Time(sdf.parse(time).getTime());
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	public void saveUserActivity(String notes) {
 		if (Sessions.getCurrent().getAttribute("userlogin") != null) {
 			Session session = null;
@@ -334,5 +355,57 @@ public class ServiceImplMain implements ServiceMain {
 				}
 			}
 		}
+	}
+
+	public void deleteActivity(Activity activity) {
+		org.hibernate.Session querySession = null;
+		try {
+			querySession = hibernateUtil.getSessionFactory().openSession();
+
+			if (activity.getFileData() != null) {
+				FilesData filesData = activity.getFileData();
+				File file = new File(getQuery("location."
+						+ filesData.getFiletype().toLowerCase())
+						+ "/" + filesData.getFilename());
+				if (file.isFile()) {
+					file.delete();
+				}
+				Transaction trx = querySession.beginTransaction();
+				querySession.delete(filesData);
+				trx.commit();
+			}
+			Transaction trx = querySession.beginTransaction();
+			querySession.delete(activity);
+			trx.commit();
+
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		} finally {
+			if (querySession != null) {
+				try {
+					querySession.close();
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
+				}
+			}
+		}
+	}
+
+	public Criteria getCriteriaAtDateBetween(Criteria criteria,
+			String columnName, String dateString) {
+		Timestamp basic = convertToTimeStamp("HH:mm:ss", dateString);
+		if (basic == null) {
+			Timestamp lowTimestamp = convertToTimeStamp("dd/MM/yyyy",
+					dateString);
+			Timestamp highTimestamp = convertToTimeStamp("dd/MM/yyyy HH:mm:ss",
+					dateString + " 23:59:59");
+			criteria.add(Restrictions.between(columnName, lowTimestamp,
+					highTimestamp));
+		} else {
+			Timestamp highTimestamp = convertToTimeStamp("dd/MM/yyyy HH:mm:ss",
+					dateString + ":59");
+			criteria.add(Restrictions.between(columnName, basic, highTimestamp));
+		}
+		return criteria;
 	}
 }

@@ -150,6 +150,7 @@ public class PdfHelper implements PdfPTableEvent {
 					} catch (Exception e) {
 					}
 				}
+				preparedStatement.close();
 			}
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);

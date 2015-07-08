@@ -123,18 +123,14 @@ public class CSVHelper {
 				serviceMain.updateActivity(_id, new File(filename), extension,
 						"Complete", advancedObject);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(e.getMessage(), e);
+				serviceMain.updateActivity(_id, null, null, e.getMessage(),
+						advancedObject);
 			} finally {
-				if (resultSet != null) {
-					try {
-						resultSet.close();
-						resultSet = null;
-					} catch (SQLException e) {
-					}
-				}
+				resultSet.close();
+				preparedStatement.close();
 			}
-
+			
 		} catch (InstantiationException e) {
 			logger.error(e.getMessage(), e);
 			serviceMain.updateActivity(_id, null, null, e.getMessage(),
