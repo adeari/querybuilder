@@ -53,7 +53,7 @@ public class TimerMain {
 					if (resultSet.getLong("counti") > 0) {
 
 						preparedStatement = connection
-								.prepareStatement("SELECT id FROM tb_file WHERE TIMESTAMPDIFF(MONTH, updated_at, now()) >= 3 ");
+								.prepareStatement("SELECT id FROM tb_file WHERE TIMESTAMPDIFF(MONTH, updated_at, now()) >= 3 limit 100");
 						resultSet = preparedStatement.executeQuery();
 						preparedStatement = connection
 								.prepareStatement("UPDATE tb_file SET download_link= ?, updated_at = now() WHERE id = ?");
