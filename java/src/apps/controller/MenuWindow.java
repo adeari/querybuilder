@@ -52,7 +52,6 @@ import apps.entity.Activity;
 import apps.entity.FileSizeTotal;
 import apps.entity.FileSizeUsed;
 import apps.entity.FilesData;
-import apps.entity.UserActivity;
 import apps.entity.Users;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
@@ -447,7 +446,7 @@ public class MenuWindow extends Window {
 		Listheader downloadListheader = new Listheader("Download");
 		downloadListheader.setParent(listhead);
 		downloadListheader.setStyle("text-align: center;");
-		downloadListheader.setSort("auto(fileData.id)");
+		downloadListheader.setWidth("80px");
 
 		Listheader fileSizeListheader = new Listheader("File size");
 		fileSizeListheader.setParent(listhead);
@@ -790,7 +789,7 @@ public class MenuWindow extends Window {
 					if (file.isFile()) {
 						Listcell downloadListcell = new Listcell();
 						downloadListcell.setParent(listitem);
-						downloadListcell.setStyle("text-align: center;");
+						downloadListcell.setStyle("text-align: center; width: 80px;");
 						ButtonCustom downloadButtonCustom = new ButtonCustom(
 								"image/download.png", activity);
 						downloadButtonCustom.addEventListener(Events.ON_CLICK,

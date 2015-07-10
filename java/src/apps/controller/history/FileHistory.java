@@ -214,6 +214,7 @@ public class FileHistory extends Window {
 
 		Listheader memoryUsedListheader = new Listheader("Memory used");
 		memoryUsedListheader.setParent(listhead);
+		memoryUsedListheader.setStyle("text-align: right");
 		memoryUsedListheader.setSort("auto(memoryUsed)");
 
 		Auxheader memoryUsedAuxheader = new Auxheader();
@@ -239,6 +240,7 @@ public class FileHistory extends Window {
 
 		Listheader fileSizedListheader = new Listheader("File size");
 		fileSizedListheader.setParent(listhead);
+		fileSizedListheader.setStyle("text-align: right");
 		fileSizedListheader.setSort("auto(fileData.filesize)");
 
 		Auxheader fileSizedAuxheader = new Auxheader();
@@ -374,10 +376,16 @@ public class FileHistory extends Window {
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
 							activity.getDoneAt())));
 			listitem.appendChild(new Listcell(activity.getShowDuration()));
-			listitem.appendChild(new Listcell(activity.getShowMemoryUsed()));
-			listitem.appendChild(new Listcell(activity.getFileData()
-					.getFilesizeToShow()));
-
+			
+			Listcell showMemoryUsedListcell = new Listcell(activity.getShowMemoryUsed());
+			showMemoryUsedListcell.setParent(listitem);
+			showMemoryUsedListcell.setStyle("text-align: right");
+			
+			Listcell fileSizeListcell = new Listcell(activity.getFileData()
+					.getFilesizeToShow());
+			fileSizeListcell.setParent(listitem);
+			fileSizeListcell.setStyle("text-align: right");
+			
 			if (!listbox.isMultiple()) {
 				listbox.setMultiple(true);
 			}

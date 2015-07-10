@@ -9,6 +9,7 @@ public class MenuitemWithData extends Menuitem {
 	private String _querySelectFinal;
 	private String driverName;
 	private String urlData;
+	private String tableName;
 	
 	public MenuitemWithData() {
 		
@@ -47,5 +48,13 @@ public class MenuitemWithData extends Menuitem {
 
 	public void setUrlData(String urlData) {
 		this.urlData = urlData;
+	}
+
+	public String getTableName() {
+		return tableName;
+	}
+
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
 	}
 }

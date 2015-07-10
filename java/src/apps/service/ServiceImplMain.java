@@ -19,7 +19,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
-import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
@@ -47,7 +46,7 @@ public class ServiceImplMain implements ServiceMain {
 	private static String _fileproperties = "data.properties";
 	private static String _queryProperties = "query.properties";
 	private static String[] columnTypeDate = new String[] {
-			"java.sql.Timestamp", "java.sql.Date" };
+			"java.sql.Timestamp", "java.sql.Date", "microsoft.sql.DateTimeOffset" };
 
 	public String getPropSetting(String key) {
 		try {
@@ -87,7 +86,7 @@ public class ServiceImplMain implements ServiceMain {
 		logger.error(ex.getMessage(), ex);
 	}
 
-	public Connection getConnection(String driverName, String url) {
+	public Connection getConnection(String driverName, String url)  {
 		try {
 			Class.forName(driverName).newInstance();
 			Connection conn = DriverManager.getConnection(url);
@@ -245,8 +244,10 @@ public class ServiceImplMain implements ServiceMain {
 				valueInsert = valueInsert.substring(0, columnLength);
 			}
 			valueInsert = "'" + valueInsert + "'";
+		} else if (columnType.equalsIgnoreCase("java.sql.Time")) {
+			valueInsert = "'" + (new SimpleDateFormat("HH:mm:ss")).format(new Date()) + "'";
 		} else if (Arrays.asList(columnTypeDate).contains(columnType)) {
-			valueInsert = "'" + new Date() + "'";
+			valueInsert = "'" + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date()) + "'";
 		} else {
 			valueInsert = "1";
 		}

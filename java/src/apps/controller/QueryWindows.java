@@ -21,6 +21,7 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.Center;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Label;
+import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.North;
@@ -34,6 +35,7 @@ import org.zkoss.zul.Window;
 
 import apps.components.MenuitemWithData;
 import apps.components.TreeItemWithData;
+import apps.controller.querycontrol.QueryProperties;
 import apps.entity.QueryData;
 import apps.entity.Users;
 import apps.service.CheckService;
@@ -216,15 +218,13 @@ public class QueryWindows extends Window {
 										Messagebox.INFORMATION);
 							} else {
 								if (_queryData == null) {
-									
 									QuerySavedWindow querySavedWindow = new QuerySavedWindow(
 											"Add query", _driverName, _url,
 											textQuery.getValue());
 									queryWindow.appendChild(querySavedWindow);
 									querySavedWindow.setWidth("400px");
 									querySavedWindow.doModal();
-									
-									
+
 								} else {
 									Transaction trx = querySession
 											.beginTransaction();
@@ -254,7 +254,9 @@ public class QueryWindows extends Window {
 									if (!userBefore.equals(user)) {
 										checkService.userIsDeleted(userBefore);
 									}
-									serviceMain.saveUserActivity("Query "+_queryData.getNamed()+" editted");
+									serviceMain.saveUserActivity("Query "
+											+ _queryData.getNamed()
+											+ " editted");
 									queryWindow.detach();
 
 								}
@@ -306,7 +308,7 @@ public class QueryWindows extends Window {
 		Treechildren treechildrenTreeDAta = new Treechildren();
 
 		addTreeData("sqlserver", "NAME", treechildrenTreeDAta);
-		addTreeData("mysql", "table_name", treechildrenTreeDAta);
+		// addTreeData("mysql", "table_name", treechildrenTreeDAta);
 
 		treechildrenTreeDAta.setParent(treeData);
 		treeData.setParent(weast);
@@ -422,6 +424,7 @@ public class QueryWindows extends Window {
 						ResultSet resultSetColumn = null;
 						try {
 							Treechildren treechildrenColumn = new Treechildren();
+							treechildrenColumn.setParent(treeitemTable);
 							preparedStatement = connection
 									.prepareStatement(serviceMain
 											.getQuery("mysql.getAllColumn")
@@ -431,6 +434,7 @@ public class QueryWindows extends Window {
 									.getMetaData();
 
 							String querySelect = "";
+							String querySelectForAccess = "";
 							String queryUpdateValues = " ";
 							String queryInsertValues = " (";
 
@@ -440,6 +444,8 @@ public class QueryWindows extends Window {
 										.getColumnName(x);
 								String columnType = resultSetMetaData
 										.getColumnClassName(x);
+								String columnTypeName = resultSetMetaData
+										.getColumnTypeName(x);
 								TreeItemWithData treeitemColumn = new TreeItemWithData(
 										ColumnName);
 								String columnValue = serviceMain
@@ -451,14 +457,20 @@ public class QueryWindows extends Window {
 
 								if (x == 1) {
 									querySelect += ColumnName;
-									queryInsertValues += columnValue;
-									queryUpdateValues += ColumnName + " = "
-											+ columnValue;
+									if (!columnType.equalsIgnoreCase("[B")) {
+										querySelectForAccess += ColumnName;
+										queryInsertValues += columnValue;
+										queryUpdateValues += ColumnName + " = "
+												+ columnValue;
+									}
 								} else {
 									querySelect += ", " + ColumnName;
-									queryInsertValues += ", " + columnValue;
-									queryUpdateValues += ", " + ColumnName
-											+ " = " + columnValue;
+									if (!columnType.equalsIgnoreCase("[B")) {
+										querySelectForAccess += ", " + ColumnName;
+										queryInsertValues += ", " + columnValue;
+										queryUpdateValues += ", " + ColumnName
+												+ " = " + columnValue;
+									}
 								}
 
 								String condition = ColumnName + " = "
@@ -486,83 +498,104 @@ public class QueryWindows extends Window {
 											}
 										});
 
-								Menupopup menupopupItemColumn = new Menupopup();
-								MenuitemWithData menuitemAddCondition = new MenuitemWithData(
-										"Add condition");
-								menuitemAddCondition.set_data(conditionAdded);
-								menuitemAddCondition
-										.setImage("image/columnicon.png");
-								menuitemAddCondition.addEventListener(
-										"onClick", new EventListener<Event>() {
-											public void onEvent(
-													Event menuitemAddConditionEvent) {
-												MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemAddConditionEvent
-														.getTarget();
-												textQuery.setValue(textQuery
-														.getValue()
-														+ menuitemWithData
-																.get_data());
-											}
-										});
-								menuitemAddCondition
-										.setParent(menupopupItemColumn);
-								MenuitemWithData menuitemAndCondition = new MenuitemWithData(
-										"AND condition");
-								menuitemAndCondition.set_data(condition);
-								menuitemAndCondition
-										.setImage("image/columnicon.png");
-
-								menuitemAndCondition.addEventListener(
-										"onClick", new EventListener<Event>() {
-											public void onEvent(
-													Event menuitemAndConditionEvent) {
-												MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemAndConditionEvent
-														.getTarget();
-												String conditionAddedAnd = " AND "
-														+ menuitemWithData
-																.get_data();
-												if (textQuery.getValue()
-														.length() > 0) {
-													conditionAddedAnd = "\n"
-															+ conditionAddedAnd;
+								if (columnType.equalsIgnoreCase("[B")) {
+									Menupopup menupopupItemColumn = new Menupopup();
+									menupopupItemColumn.setParent(queryWindow);
+									Menuitem menuitem = new Menuitem("Type "
+											+ columnTypeName + " can't access");
+									menuitem.setParent(menupopupItemColumn);
+									menuitem.setImage("image/delete-icon.png");
+									
+									treeitemColumn
+											.setContext(menupopupItemColumn);
+									treeitemColumn
+											.setParent(treechildrenColumn);
+								} else {
+									Menupopup menupopupItemColumn = new Menupopup();
+									menupopupItemColumn.setParent(queryWindow);
+									MenuitemWithData menuitemAddCondition = new MenuitemWithData(
+											"Add condition");
+									menuitemAddCondition
+											.set_data(conditionAdded);
+									menuitemAddCondition
+											.setImage("image/columnicon.png");
+									menuitemAddCondition.addEventListener(
+											"onClick",
+											new EventListener<Event>() {
+												public void onEvent(
+														Event menuitemAddConditionEvent) {
+													MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemAddConditionEvent
+															.getTarget();
+													textQuery.setValue(textQuery
+															.getValue()
+															+ menuitemWithData
+																	.get_data());
 												}
-												textQuery.setValue(textQuery
-														.getValue()
-														+ conditionAddedAnd);
-											}
-										});
-								menuitemAndCondition
-										.setParent(menupopupItemColumn);
-								MenuitemWithData menuitemORCondition = new MenuitemWithData(
-										"OR condition");
-								menuitemORCondition
-										.setImage("image/columnicon.png");
-								menuitemORCondition.set_data(condition);
-								menuitemORCondition.addEventListener("onClick",
-										new EventListener<Event>() {
-											public void onEvent(
-													Event menuitemORConditionEvent) {
-												MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemORConditionEvent
-														.getTarget();
-												String conditionAddedOr = " OR "
-														+ menuitemWithData
-																.get_data();
-												if (textQuery.getValue()
-														.length() > 0) {
-													conditionAddedOr = "\n"
-															+ conditionAddedOr;
-												}
-												textQuery.setValue(textQuery
-														.getValue()
-														+ conditionAddedOr);
-											}
-										});
-								menuitemORCondition
-										.setParent(menupopupItemColumn);
+											});
+									menuitemAddCondition
+											.setParent(menupopupItemColumn);
+									MenuitemWithData menuitemAndCondition = new MenuitemWithData(
+											"AND condition");
+									menuitemAndCondition.set_data(condition);
+									menuitemAndCondition
+											.setImage("image/columnicon.png");
 
-								menupopupItemColumn.setParent(queryWindow);
-								treeitemColumn.setContext(menupopupItemColumn);
-								treeitemColumn.setParent(treechildrenColumn);
+									menuitemAndCondition.addEventListener(
+											"onClick",
+											new EventListener<Event>() {
+												public void onEvent(
+														Event menuitemAndConditionEvent) {
+													MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemAndConditionEvent
+															.getTarget();
+													String conditionAddedAnd = " AND "
+															+ menuitemWithData
+																	.get_data();
+													if (textQuery.getValue()
+															.length() > 0) {
+														conditionAddedAnd = "\n"
+																+ conditionAddedAnd;
+													}
+													textQuery.setValue(textQuery
+															.getValue()
+															+ conditionAddedAnd);
+												}
+											});
+									menuitemAndCondition
+											.setParent(menupopupItemColumn);
+									MenuitemWithData menuitemORCondition = new MenuitemWithData(
+											"OR condition");
+									menuitemORCondition
+											.setImage("image/columnicon.png");
+									menuitemORCondition.set_data(condition);
+									menuitemORCondition.addEventListener(
+											"onClick",
+											new EventListener<Event>() {
+												public void onEvent(
+														Event menuitemORConditionEvent) {
+													MenuitemWithData menuitemWithData = (MenuitemWithData) menuitemORConditionEvent
+															.getTarget();
+													String conditionAddedOr = " OR "
+															+ menuitemWithData
+																	.get_data();
+													if (textQuery.getValue()
+															.length() > 0) {
+														conditionAddedOr = "\n"
+																+ conditionAddedOr;
+													}
+													textQuery.setValue(textQuery
+															.getValue()
+															+ conditionAddedOr);
+												}
+											});
+									menuitemORCondition
+											.setParent(menupopupItemColumn);
+
+									treeitemColumn
+											.setContext(menupopupItemColumn);
+									treeitemColumn
+											.setParent(treechildrenColumn);
+								}
+
 							}
 
 							treeitemTable.setParent(treechildrenTable);
@@ -579,7 +612,7 @@ public class QueryWindows extends Window {
 
 							queryInsertValues += ") ";
 							String queryInsert = "INSERT INTO " + tableName
-									+ " (" + querySelect + ") VALUES "
+									+ " (" + querySelectForAccess + ") VALUES "
 									+ queryInsertValues;
 							String queryUpdate = "UPDATE " + tableName
 									+ " SET " + queryUpdateValues + " WHERE ";
@@ -607,6 +640,7 @@ public class QueryWindows extends Window {
 									});
 
 							Menupopup menupopupItemTable = new Menupopup();
+							menupopupItemTable.setParent(queryWindow);
 							MenuitemWithData menuitemPopupItemTableSelect = new MenuitemWithData(
 									"Select");
 							menuitemPopupItemTableSelect
@@ -659,6 +693,7 @@ public class QueryWindows extends Window {
 									});
 							select300ItemTableMenuitem
 									.setParent(menupopupItemTable);
+
 							MenuitemWithData menuitemPopupItemTableInsert = new MenuitemWithData(
 									"Insert");
 							menuitemPopupItemTableInsert
@@ -669,7 +704,6 @@ public class QueryWindows extends Window {
 									.setDriverName(databaseDriver);
 							menuitemPopupItemTableInsert
 									.setUrlData(databaseUrl);
-
 							menuitemPopupItemTableInsert.addEventListener(
 									"onClick", new EventListener<Event>() {
 										public void onEvent(
@@ -739,11 +773,40 @@ public class QueryWindows extends Window {
 									});
 							menuitemPopupItemTableDelete
 									.setParent(menupopupItemTable);
-							menupopupItemTable.setParent(queryWindow);
 
+							MenuitemWithData propertiesTableMenuitem = new MenuitemWithData(
+									"Properties");
+							propertiesTableMenuitem.setImage("image/sql.png");
+							propertiesTableMenuitem
+									.set_querySelectFinal(queryDelete);
+							propertiesTableMenuitem
+									.setDriverName(databaseDriver);
+							propertiesTableMenuitem.setUrlData(databaseUrl);
+							propertiesTableMenuitem.setTableName(tableName);
+							propertiesTableMenuitem.addEventListener("onClick",
+									new EventListener<Event>() {
+										public void onEvent(
+												Event propertiesTableMenuitemEvent) {
+											MenuitemWithData menuitemWithData = (MenuitemWithData) propertiesTableMenuitemEvent
+													.getTarget();
+											QueryProperties queryProperties = new QueryProperties(
+													menuitemWithData
+															.getTableName()
+															+ " properties",
+													menuitemWithData
+															.getDriverName(),
+													menuitemWithData
+															.getUrlData(),
+													menuitemWithData
+															.getTableName());
+											queryProperties
+													.setParent(queryWindow);
+											queryProperties.doModal();
+										}
+									});
+							propertiesTableMenuitem
+									.setParent(menupopupItemTable);
 							treeitemTable.setContext(menupopupItemTable);
-
-							treechildrenColumn.setParent(treeitemTable);
 
 						} catch (Exception ex) {
 							logger.error(ex.getMessage(), ex);
