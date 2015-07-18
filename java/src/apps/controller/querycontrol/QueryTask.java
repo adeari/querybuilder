@@ -92,7 +92,7 @@ public class QueryTask extends Window {
 			Row fileTypeRow = new Row();
 			fileTypeRow.setParent(rows);
 			fileTypeRow.setStyle("boder: 0");
-			Label fileTypeLabel = new Label("File type");
+			Label fileTypeLabel = new Label("Export to");
 			fileTypeLabel.setParent(fileTypeRow);
 			fileTypeLabel.setWidth("100px");
 			fileTypeLabel.setStyle("boder: 0");

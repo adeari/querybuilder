@@ -194,8 +194,8 @@ public class QueryOperation extends Window {
 			});
 			item.appendChild(new Listcell(queryData.getNamed()));
 			String sql = queryData.getSql();
-			if (sql.length() > 150) {
-				sql.substring(0, 150);
+			if (sql.length() > 200) {
+				sql = sql.substring(0, 200) + "...";
 			}
 			item.appendChild(new Listcell(sql));
 		}

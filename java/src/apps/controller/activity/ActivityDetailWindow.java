@@ -111,14 +111,14 @@ public class ActivityDetailWindow extends Window {
 
 		if (_activity.getFileData() != null) {
 			FilesData filesData = _activity.getFileData();
-			
+
 			Grid fileInfo = new Grid();
 			fileInfo.setParent(hbox);
 			fileInfo.setWidth("300px");
-			
+
 			Rows fileInfoRows = new Rows();
 			fileInfoRows.setParent(fileInfo);
-			
+
 			Row fileSizeRow = new Row();
 			fileSizeRow.setParent(fileInfoRows);
 			Cell filseSizeCell = new Cell();
@@ -126,18 +126,20 @@ public class ActivityDetailWindow extends Window {
 			filseSizeCell.setWidth("170px");
 			Label fileSizeLabel = new Label("File size");
 			fileSizeLabel.setParent(filseSizeCell);
-			Textbox filseSizeTextbox = new Textbox(filesData.getFilesizeToShow());
+			Textbox filseSizeTextbox = new Textbox(
+					filesData.getFilesizeToShow());
 			filseSizeTextbox.setParent(fileSizeRow);
 			filseSizeTextbox.setReadonly(true);
-			
+
 			Row memoryUsedSizeRow = new Row();
 			memoryUsedSizeRow.setParent(fileInfoRows);
 			Label memoryUsedLabel = new Label("Memory use");
 			memoryUsedLabel.setParent(memoryUsedSizeRow);
-			Textbox memoryUsedTextbox = new Textbox(_activity.getShowMemoryUsed());
+			Textbox memoryUsedTextbox = new Textbox(
+					_activity.getShowMemoryUsed());
 			memoryUsedTextbox.setParent(memoryUsedSizeRow);
 			memoryUsedTextbox.setReadonly(true);
-			
+
 			Row memoryMaxSizeRow = new Row();
 			memoryMaxSizeRow.setParent(fileInfoRows);
 			Label memoryMaxLabel = new Label("Memory max");
@@ -145,7 +147,7 @@ public class ActivityDetailWindow extends Window {
 			Textbox memoryMaxTextbox = new Textbox(_activity.getShowMemoryMax());
 			memoryMaxTextbox.setParent(memoryMaxSizeRow);
 			memoryMaxTextbox.setReadonly(true);
-			
+
 			Row durationRow = new Row();
 			durationRow.setParent(fileInfoRows);
 			Label durationLabel = new Label("Duration");
@@ -153,33 +155,37 @@ public class ActivityDetailWindow extends Window {
 			Textbox durationTextbox = new Textbox(_activity.getShowDuration());
 			durationTextbox.setParent(durationRow);
 			durationTextbox.setReadonly(true);
-			
+
 			Row startAtRow = new Row();
 			startAtRow.setParent(fileInfoRows);
 			Label startAtLabel = new Label("Process start");
 			startAtLabel.setParent(startAtRow);
-			Textbox startAtTextbox = new Textbox(serviceMain.convertStringFromDate("dd/MM/yyyy", _activity.getStartAt()));
+			Textbox startAtTextbox = new Textbox(
+					serviceMain.convertStringFromDate("dd/MM/yyyy",
+							_activity.getStartAt()));
 			startAtTextbox.setParent(startAtRow);
 			startAtTextbox.setReadonly(true);
-			
+
 			Row doneAtRow = new Row();
 			doneAtRow.setParent(fileInfoRows);
 			Label doneAtLabel = new Label("Process end");
 			doneAtLabel.setParent(doneAtRow);
-			Textbox doneAtTextbox = new Textbox(serviceMain.convertStringFromDate("dd/MM/yyyy", _activity.getDoneAt()));
+			Textbox doneAtTextbox = new Textbox(
+					serviceMain.convertStringFromDate("dd/MM/yyyy",
+							_activity.getDoneAt()));
 			doneAtTextbox.setParent(doneAtRow);
 			doneAtTextbox.setReadonly(true);
-			
+
 			Row createdAtRow = new Row();
 			createdAtRow.setParent(fileInfoRows);
 			Label createdAtLabel = new Label("Created at");
 			createdAtLabel.setParent(createdAtRow);
-			Textbox createdAtTextbox = new Textbox(serviceMain.convertStringFromDate("dd/MM/yyyy", _activity.getCreatedAt()));
+			Textbox createdAtTextbox = new Textbox(
+					serviceMain.convertStringFromDate("dd/MM/yyyy",
+							_activity.getCreatedAt()));
 			createdAtTextbox.setParent(createdAtRow);
 			createdAtTextbox.setReadonly(true);
-			
-			
-			
+
 			Grid sendEmailGrid = new Grid();
 			sendEmailGrid.setParent(hbox);
 
@@ -204,8 +210,7 @@ public class ActivityDetailWindow extends Window {
 			Cell linkDownloadCellTextbox = new Cell();
 			linkDownloadCellTextbox.setParent(linkDownloadRow);
 			Textbox linkDownloadTextbox = new Textbox(url
-					+ "/download/file?ridfil="
-					+ filesData.getDownloadLink());
+					+ "/download/file?ridfil=" + filesData.getDownloadLink());
 			linkDownloadTextbox.setParent(linkDownloadCellTextbox);
 			linkDownloadTextbox.setStyle("width: 80%;");
 			linkDownloadTextbox.setReadonly(true);
@@ -257,6 +262,16 @@ public class ActivityDetailWindow extends Window {
 			emailToTextbox = new Textbox();
 			emailToTextbox.setParent(emailToTextboxCell);
 			emailToTextbox.setStyle("width: 80%;");
+			emailToTextbox.addEventListener(Events.ON_OK,
+					new EventListener<Event>() {
+						public void onEvent(Event emailToTextboxEvent) {
+							if (!emailToTextbox.isDisabled()) {
+								emailToTextbox.setDisabled(true);
+								selectEmail();
+								emailToTextbox.setDisabled(false);
+							}
+						}
+					});
 			searchUserEmailButton = new Button();
 			searchUserEmailButton.setParent(emailToTextboxCell);
 			searchUserEmailButton.setImage("image/small_search_icon.png");
@@ -265,13 +280,7 @@ public class ActivityDetailWindow extends Window {
 						public void onEvent(Event searchUserEmailEvent) {
 							if (!searchUserEmailButton.isDisabled()) {
 								searchUserEmailButton.setDisabled(true);
-								UserEmailWindow userEmailWindow = new UserEmailWindow();
-								userEmailWindow.setParent(window);
-								userEmailWindow.doModal();
-
-								emailToTextbox.setValue(userEmailWindow
-										.getUsersEmail());
-
+								selectEmail();
 								searchUserEmailButton.setDisabled(false);
 							}
 						}
@@ -287,8 +296,7 @@ public class ActivityDetailWindow extends Window {
 			subjectTextbox = new Textbox();
 			subjectTextbox.setParent(subjectRow);
 			subjectTextbox.setStyle("width: 100%;");
-			
-			
+
 			Row descriptionRow = new Row();
 			descriptionRow.setParent(sendEmailRows);
 			Cell descriptionCell = new Cell();
@@ -316,8 +324,8 @@ public class ActivityDetailWindow extends Window {
 								throw new WrongValueException(emailToTextbox,
 										"Enter email");
 							} else if (subjectTextbox.getValue().isEmpty()) {
-								throw new WrongValueException(
-										subjectTextbox, "Enter subject");
+								throw new WrongValueException(subjectTextbox,
+										"Enter subject");
 							} else if (descriptionTextbox.getValue().isEmpty()) {
 								throw new WrongValueException(
 										descriptionTextbox, "Enter description");
@@ -325,8 +333,8 @@ public class ActivityDetailWindow extends Window {
 							window.setClosable(false);
 							EmailObject emailObject = new EmailObject(
 									"from@yo.net", emailToTextbox.getValue(),
-									subjectTextbox.getValue(), descriptionTextbox
-											.getValue());
+									subjectTextbox.getValue(),
+									descriptionTextbox.getValue());
 							serviceMain
 									.saveUserActivity("Send email with \nSubject "
 											+ emailObject.getSubject()
@@ -341,6 +349,20 @@ public class ActivityDetailWindow extends Window {
 
 	public boolean isRefreshActivity() {
 		return refreshActivity;
+	}
+
+	public void selectEmail() {
+		
+		UserEmailWindow userEmailWindow = new UserEmailWindow();
+		userEmailWindow.setParent(window);
+		userEmailWindow.doModal();
+
+		if (!emailToTextbox.getValue().isEmpty()) {
+			emailToTextbox.setValue(emailToTextbox.getValue() + ", "
+					+ userEmailWindow.getUsersEmail());
+		} else {
+			emailToTextbox.setValue(userEmailWindow.getUsersEmail());
+		}
 	}
 
 }

@@ -65,7 +65,9 @@ public class UserActivityWindow extends Window {
 		listbox.setMold("paging");
 		listbox.setAutopaging(true);
 		listbox.setEmptyMessage("No actifity");
-		listbox.setCheckmark(true);
+		if (!isMine) {
+			listbox.setCheckmark(true);
+		}
 		listbox.setItemRenderer(new ListItemRenderer());
 		listbox.setVflex(true);
 		listbox.setPagingPosition("bottom");
@@ -83,6 +85,7 @@ public class UserActivityWindow extends Window {
 			Listheader usernameListheader = new Listheader("Username");
 			usernameListheader.setParent(listhead);
 			usernameListheader.setSort("auto(userCreated.username)");
+			usernameListheader.setWidth("180px");
 
 			Auxheader usernameAuxheader = new Auxheader();
 			usernameAuxheader.setParent(auxhead);
@@ -152,6 +155,7 @@ public class UserActivityWindow extends Window {
 		listfooter.setSpan(listhead.getChildren().size() - 1);
 		listfooter.setStyle("text-align: center;");
 		deleteButton = new Button("Delete");
+		if (!isMine) {
 		deleteButton.setParent(listfooter);
 		deleteButton.addEventListener(Events.ON_CLICK,
 				new EventListener<Event>() {
@@ -189,6 +193,7 @@ public class UserActivityWindow extends Window {
 						}
 					}
 				});
+		}
 
 		refreshListbox();
 	}
@@ -250,6 +255,26 @@ public class UserActivityWindow extends Window {
 		public void render(Listitem listitem, UserActivity userActivity,
 				int index) throws Exception {
 			listitem.setValue(userActivity);
+			listitem.addEventListener(Events.ON_DOUBLE_CLICK,
+					new EventListener<Event>() {
+				public void onEvent(Event listitemEvent) {
+					Listitem selectedListitem = (Listitem) listitemEvent.getTarget();
+					UserActivity selectedActivity = selectedListitem.getValue();
+					
+					
+					Window detailWindow = new Window();
+					detailWindow.setParent(window);
+					detailWindow.setTitle("Detail notes activity");
+					detailWindow.setClosable(true);
+					detailWindow.setMaximizable(true);
+					Textbox detailNotesTextbox = new Textbox(selectedActivity.getNotes());
+					detailNotesTextbox.setRows(6);
+					detailNotesTextbox.setWidth("400px");
+					detailNotesTextbox.setParent(detailWindow);
+					detailWindow.doModal();
+					
+				}
+			});
 			if (!_isMine) {
 				listitem.appendChild(new Listcell(userActivity.getUserCreated()
 						.getUsername()));
@@ -257,7 +282,11 @@ public class UserActivityWindow extends Window {
 			listitem.appendChild(new Listcell(serviceMain
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
 							userActivity.getCreatedAt())));
-			listitem.appendChild(new Listcell(userActivity.getNotes()));
+			String notes = userActivity.getNotes();
+			if (notes.length() > 170) {
+				notes = notes.substring(0,170)+"...";
+			}
+			listitem.appendChild(new Listcell(notes));
 			if (!listbox.isMultiple()) {
 				listbox.setMultiple(true);
 			}
