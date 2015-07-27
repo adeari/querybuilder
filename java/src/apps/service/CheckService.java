@@ -69,17 +69,17 @@ public class CheckService {
 			userCount += Double.valueOf(fileSizeUsed.getFilesize()).longValue();
 		}
 		
-
-		Transaction trx = querySession.beginTransaction();
-
-		if (userCount > 0) {
+		if (userCount > 0 && user.isIsdeleted()) {
+			Transaction trx = querySession.beginTransaction();
 			user.setIsdeleted(false);
-		} else {
+			querySession.update(user);
+			trx.commit();
+		} else if (!user.isIsdeleted()) {
+			Transaction trx = querySession.beginTransaction();
 			user.setIsdeleted(true);
+			querySession.update(user);
+			trx.commit();
 		}
-		querySession.update(user);
-
-		trx.commit();
 	}
 
 	public void queryIsDeleted(QueryData queryData) {
@@ -113,17 +113,20 @@ public class CheckService {
 		criteria.add(Restrictions.eq("queryData", queryData));
 		cuntData += (long) criteria.uniqueResult();
 
-		Transaction trx = querySession.beginTransaction();
-
-		if (cuntData > 0) {
+		if (cuntData > 0 && queryData.isDeleted()) {
+			Transaction trx = querySession.beginTransaction();
 			queryData.setDeleted(false);
-			;
-		} else {
+			querySession.update(queryData);
+			trx.commit();
+		} else if (!queryData.isDeleted()) {
+			Transaction trx = querySession.beginTransaction();
 			queryData.setDeleted(true);
+			querySession.update(queryData);
+			trx.commit();
 		}
-		querySession.update(queryData);
+		
 
-		trx.commit();
+		
 	}
 	
 	public static boolean isValidEmailAddress(String email) {
