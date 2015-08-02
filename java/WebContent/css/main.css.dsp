@@ -8,3 +8,12 @@
 	font-weight: bold;
 	height: 40px;
 }
+
+
+
+.MyRowHeight tr.z-row
+{
+height:5px;
+line-height:10px;
+min-height:5px;
+}

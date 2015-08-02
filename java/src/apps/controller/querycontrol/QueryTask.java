@@ -6,7 +6,6 @@ import java.sql.SQLException;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -42,6 +41,8 @@ public class QueryTask extends Window {
 	private Window window;
 	private Textbox namedTextbox;
 	private Textbox sqlTextbox;
+	
+	private Session _querySession;
 
 	public QueryTask(QueryData queryData) {
 		super("Query operation", null, true);
@@ -134,7 +135,7 @@ public class QueryTask extends Window {
 									Messagebox.QUESTION) == Messagebox.YES) {
 								preparedStatement.executeUpdate();
 								serviceMain
-										.saveUserActivity("Run query named : "
+										.saveUserActivity(_querySession, "Run query named : "
 												+ _queryQueryData.getNamed()
 												+ "\nQuery : "
 												+ _queryQueryData.getSql()
@@ -145,7 +146,7 @@ public class QueryTask extends Window {
 							}
 						} else {
 							preparedStatement.executeUpdate();
-							serviceMain.saveUserActivity("Run query named : "
+							serviceMain.saveUserActivity(_querySession, "Run query named : "
 									+ _queryQueryData.getNamed() + "\nQuery : "
 									+ _queryQueryData.getSql()
 									+ "\nResult : Success");
@@ -155,7 +156,7 @@ public class QueryTask extends Window {
 						}
 					} catch (Exception ex) {
 						logger.error(ex.getMessage(), ex);
-						serviceMain.saveUserActivity("Run query named : "
+						serviceMain.saveUserActivity(_querySession, "Run query named : "
 								+ _queryQueryData.getNamed() + "\nQuery : "
 								+ _queryQueryData.getSql()
 								+ "\nResult : Error = " + ex.getMessage());
@@ -171,11 +172,8 @@ public class QueryTask extends Window {
 						}
 					}
 				} else {
-					Session querySession = null;
 					try {
-						querySession = hibernateUtil.getSessionFactory()
-								.openSession();
-						Transaction trx = querySession.beginTransaction();
+						_querySession = hibernateUtil.getSessionFactory(_querySession);
 						Activity activity = new Activity(namedTextbox
 								.getValue(), sqlTextbox.getValue(),
 								(Users) Sessions.getCurrent().getAttribute(
@@ -187,10 +185,8 @@ public class QueryTask extends Window {
 										.toString(), _queryQueryData
 										.getDriver(), _queryQueryData
 										.getConnectionString());
-						querySession.save(activity);
-						trx.commit();
-						querySession.close();
-						serviceMain.saveUserActivity("Run query named : "
+						_querySession.save(activity);
+						serviceMain.saveUserActivity(_querySession, "Run query named : "
 								+ _queryQueryData.getNamed() + "\nQuery : "
 								+ _queryQueryData.getSql()
 								+ "\nResult : Success");
@@ -200,21 +196,12 @@ public class QueryTask extends Window {
 								Messagebox.INFORMATION);
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);
-						serviceMain.saveUserActivity("Run query named : "
+						serviceMain.saveUserActivity(_querySession, "Run query named : "
 								+ _queryQueryData.getNamed() + "\nQuery : "
 								+ _queryQueryData.getSql()
 								+ "\nResult : Error = " + e.getMessage());
 						Messagebox.show("Query error", "Error", Messagebox.OK,
 								Messagebox.ERROR);
-					} finally {
-						if (querySession != null) {
-							try {
-								querySession.close();
-							} catch (Exception e) {
-								logger.error(e.getMessage(), e);
-							}
-						}
-
 					}
 
 				}

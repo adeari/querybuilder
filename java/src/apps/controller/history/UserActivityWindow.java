@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
@@ -14,8 +13,6 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
 import org.zkoss.zul.Button;
-import org.zkoss.zul.Foot;
-import org.zkoss.zul.Footer;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Listbox;
@@ -30,7 +27,6 @@ import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
-import apps.entity.Activity;
 import apps.entity.UserActivity;
 import apps.entity.Users;
 import apps.service.ServiceImplMain;
@@ -51,6 +47,8 @@ public class UserActivityWindow extends Window {
 	private Textbox createdSearchTextbox;
 	private Textbox notesSearchTextbox;
 	private Button deleteButton;
+	
+	private org.hibernate.Session _sessionSelect;
 
 	public UserActivityWindow(boolean isMine) {
 		super("My activity", null, true);
@@ -166,27 +164,18 @@ public class UserActivityWindow extends Window {
 
 							org.hibernate.Session sessionDelete = null;
 							try {
-								sessionDelete = hibernateUtil
-										.getSessionFactory().openSession();
-								Transaction trx = sessionDelete
-										.beginTransaction();
+								_sessionSelect = hibernateUtil
+										.getSessionFactory(_sessionSelect);
 								for (Listitem listitem : listbox
 										.getSelectedItems()) {
 									UserActivity userActivity = listitem
 											.getValue();
 									sessionDelete.delete(userActivity);
+									_sessionSelect.flush();
 								}
-								trx.commit();
+								
 							} catch (Exception e) {
 								logger.error(e.getMessage(), e);
-							} finally {
-								if (sessionDelete != null) {
-									try {
-										sessionDelete.close();
-									} catch (Exception e) {
-										logger.error(e.getMessage(), e);
-									}
-								}
 							}
 
 							refreshListbox();
@@ -199,10 +188,10 @@ public class UserActivityWindow extends Window {
 	}
 
 	private void refreshListbox() {
-		org.hibernate.Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect
+			_sessionSelect = hibernateUtil.getSessionFactory(_sessionSelect);
+			_sessionSelect.clear();
+			Criteria criteria = _sessionSelect
 					.createCriteria(UserActivity.class);
 			if (_isMine) {
 				criteria.add(Restrictions.eq("userCreated", ((Users) Sessions
@@ -238,14 +227,6 @@ public class UserActivityWindow extends Window {
 					(List<UserActivity>) criteria.list()));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
 	}
 

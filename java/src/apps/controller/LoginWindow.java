@@ -152,7 +152,7 @@ public class LoginWindow extends Vlayout {
 			canLogin = false;
 		}
 
-		Users user = serviceMain.get1UserByUsernameAndPassword(
+		Users user = serviceMain.get1UserByUsernameAndPassword(null, 
 				usernameTextbox.getValue(), passwordTextbox.getValue());
 		if (canLogin && user == null) {
 			commentLabel.setVisible(true);

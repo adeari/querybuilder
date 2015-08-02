@@ -2,7 +2,6 @@ package apps.controller.users;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
@@ -35,6 +34,8 @@ public class ChangePasswordWindow extends Window {
 	private Textbox passwordTextbox;
 	private Textbox rePasswordTextbox;
 	private Button saveButton;
+
+	private org.hibernate.Session _session;
 
 	public ChangePasswordWindow(String title) {
 		super(title, null, true);
@@ -98,91 +99,66 @@ public class ChangePasswordWindow extends Window {
 						if (!saveButton.isDisabled()) {
 							saveButton.setDisabled(true);
 
-							boolean canSave = true;
-							if (canSave
-									&& passwordOldTextbox.getValue().isEmpty()) {
+							if (passwordOldTextbox.getValue().isEmpty()) {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter old password");
 								passwordOldTextbox.setFocus(true);
-								canSave = false;
+								return;
 							}
-							if (canSave && passwordTextbox.getValue().isEmpty()) {
+							if (passwordTextbox.getValue().isEmpty()) {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter new password");
 								passwordTextbox.setFocus(true);
-								canSave = false;
+								return;
 							}
-							if (canSave
-									&& rePasswordTextbox.getValue().isEmpty()) {
+							if (rePasswordTextbox.getValue().isEmpty()) {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter re new password");
 								rePasswordTextbox.setFocus(true);
-								canSave = false;
+								return;
 							}
 
-							if (canSave
-									&& !rePasswordTextbox.getValue()
-											.equalsIgnoreCase(
-													passwordTextbox.getValue())) {
+							if (!rePasswordTextbox.getValue().equalsIgnoreCase(
+									passwordTextbox.getValue())) {
 								commentLabel.setVisible(true);
 								commentLabel
 										.setValue("New password is not same");
 								rePasswordTextbox.setFocus(true);
-								canSave = false;
+								return;
 							}
 							Session sessionZK = Sessions.getCurrent();
 							Users user = (Users) sessionZK
 									.getAttribute("userlogin");
 
-							if (canSave) {
-								if (!serviceMain.convertPass(
-										passwordOldTextbox.getValue()).equals(
-										user.getPass())) {
-									commentLabel.setVisible(true);
-									commentLabel.setValue("Wrong old password");
-									passwordOldTextbox.setFocus(true);
-									canSave = false;
-								}
+							if (!serviceMain.convertPass(
+									passwordOldTextbox.getValue()).equals(
+									user.getPass())) {
+								commentLabel.setVisible(true);
+								commentLabel.setValue("Wrong old password");
+								passwordOldTextbox.setFocus(true);
+								return;
 							}
 
-							if (canSave) {
-								org.hibernate.Session session = null;
-								try {
-									session = hibernateUtil.getSessionFactory()
-											.openSession();
+							try {
+								_session = hibernateUtil
+										.getSessionFactory(_session);
 
-									Criteria citeria = session
-											.createCriteria(Users.class);
-									citeria.add(Restrictions.eq("id",
-											user.getId()));
+								Criteria citeria = _session
+										.createCriteria(Users.class);
+								citeria.add(Restrictions.eq("id", user.getId()));
 
-									Users userUpdate = (Users) citeria
-											.uniqueResult();
+								Users userUpdate = (Users) citeria
+										.uniqueResult();
 
-									Transaction trx = session
-											.beginTransaction();
-									userUpdate.setPass(serviceMain
-											.convertPass(passwordTextbox
-													.getValue()));
-
-									session.update(userUpdate);
-
-									trx.commit();
-									serviceMain.saveUserActivity("Change password");
-									detach();
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-
-								} finally {
-									if (session != null) {
-										try {
-											session.close();
-										} catch (Exception e) {
-											logger.error(e.getMessage(), e);
-										}
-									}
-
-								}
+								userUpdate.setPass(serviceMain
+										.convertPass(passwordTextbox.getValue()));
+								_session.update(userUpdate);
+								_session.flush();
+								serviceMain.saveUserActivity(_session,
+										"Change password");
+								detach();
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
 
 							}
 

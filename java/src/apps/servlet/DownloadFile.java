@@ -35,6 +35,8 @@ public class DownloadFile extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Logger logger = Logger.getLogger(DownloadFile.class);
 	private ServiceMain serviceMain;
+	
+	private org.hibernate.Session _sessionSelect;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
@@ -102,17 +104,16 @@ public class DownloadFile extends HttpServlet {
 	private void downloadFile(HttpServletResponse response,
 			String linkDownload, Users user) {
 		serviceMain = new ServiceImplMain();
-		org.hibernate.Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
+			_sessionSelect = hibernateUtil.getSessionFactory(_sessionSelect);
 			FilesData filesData = null;
 			if (user.getDivisi().equalsIgnoreCase("admin")) {
-				Criteria criteria = sessionSelect
+				Criteria criteria = _sessionSelect
 						.createCriteria(FilesData.class);
 				criteria.add(Restrictions.eq("downloadLink", linkDownload));
 				filesData = (FilesData) criteria.uniqueResult();
 			} else if (!user.getDivisi().equalsIgnoreCase("admin")) {
-				Criteria criteria = sessionSelect
+				Criteria criteria = _sessionSelect
 						.createCriteria(Activity.class);
 				criteria.createAlias("fileData", "fileData");
 				criteria.add(Restrictions.eq("fileData.downloadLink",
@@ -122,7 +123,7 @@ public class DownloadFile extends HttpServlet {
 					showMessage(response, "This file not exist");
 					return;
 				} else {
-					criteria = sessionSelect.createCriteria(QueryData.class);
+					criteria = _sessionSelect.createCriteria(QueryData.class);
 					criteria.add(Restrictions.eq("named",
 							activity.getQueryName()));
 					QueryData queryData = (QueryData) criteria.uniqueResult();
@@ -130,7 +131,7 @@ public class DownloadFile extends HttpServlet {
 						showMessage(response, "This file not exist");
 						return;
 					} else {
-						criteria = sessionSelect.createCriteria(
+						criteria = _sessionSelect.createCriteria(
 								UsersQuery.class).setProjection(
 								Projections.rowCount());
 						criteria.add(Restrictions.eq("userData", user));
@@ -189,14 +190,6 @@ public class DownloadFile extends HttpServlet {
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
 	}
 
@@ -207,10 +200,9 @@ public class DownloadFile extends HttpServlet {
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		serviceMain = new ServiceImplMain();
-		org.hibernate.Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect.createCriteria(Users.class);
+			_sessionSelect = hibernateUtil.getSessionFactory(_sessionSelect);
+			Criteria criteria = _sessionSelect.createCriteria(Users.class);
 			criteria.add(Restrictions.eq("username",
 					request.getParameter("username")));
 			criteria.add(Restrictions.eq("pass",
@@ -224,14 +216,6 @@ public class DownloadFile extends HttpServlet {
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
 	}
 

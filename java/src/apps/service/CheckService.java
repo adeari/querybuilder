@@ -8,7 +8,6 @@ import javax.mail.internet.InternetAddress;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 
@@ -21,122 +20,79 @@ import apps.entity.UsersQuery;
 public class CheckService {
 	private static final Logger logger = Logger.getLogger(CheckService.class);
 
-	public void userIsDeleted(Users user) {
-		Session querySession = null;
-
-		try {
-			querySession = hibernateUtil.getSessionFactory().openSession();
-
-			userIsDeleted(querySession, user);
-
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (querySession != null) {
-				try {
-					querySession.close();
-				} catch (Exception e) {
-
-				}
-			}
-		}
-	}
-
 	public void userIsDeleted(Session querySession, Users user)
 			throws Exception {
-		long userCount = 0;
-		Criteria criteria = querySession.createCriteria(QueryData.class)
-				.setProjection(Projections.rowCount());
-		criteria.add(Restrictions.or(Restrictions.eq("modifiedBy", user),
-				Restrictions.eq("createdBy", user)));
-		userCount += (long) criteria.uniqueResult();
+		if (user != null) {
+			querySession = hibernateUtil.getSessionFactory(querySession);
+			querySession.clear();
+			long userCount = 0;
+			Criteria criteria = querySession.createCriteria(QueryData.class)
+					.setProjection(Projections.rowCount());
+			criteria.add(Restrictions.or(Restrictions.eq("modifiedBy", user),
+					Restrictions.eq("createdBy", user)));
+			userCount += (long) criteria.uniqueResult();
 
-		criteria = querySession.createCriteria(UsersQuery.class).setProjection(
-				Projections.rowCount());
-		criteria.add(Restrictions.eq("userData", user));
-		userCount += (long) criteria.uniqueResult();
-		
-		criteria = querySession.createCriteria(Activity.class).setProjection(
-				Projections.rowCount());
-		criteria.add(Restrictions.eq("userCreated", user));
-		userCount += (long) criteria.uniqueResult();
-		
-		criteria = querySession.createCriteria(FileSizeUsed.class);
-		criteria.add(Restrictions.eq("userOwner", user));
-		List<FileSizeUsed> fileSizeUseds = criteria.list();
-		for (FileSizeUsed fileSizeUsed : fileSizeUseds) {
-			userCount += Double.valueOf(fileSizeUsed.getFilesize()).longValue();
-		}
-		
-		if (userCount > 0 && user.isIsdeleted()) {
-			Transaction trx = querySession.beginTransaction();
-			user.setIsdeleted(false);
-			querySession.update(user);
-			trx.commit();
-		} else if (!user.isIsdeleted()) {
-			Transaction trx = querySession.beginTransaction();
-			user.setIsdeleted(true);
-			querySession.update(user);
-			trx.commit();
-		}
-	}
+			criteria = querySession.createCriteria(UsersQuery.class)
+					.setProjection(Projections.rowCount());
+			criteria.add(Restrictions.eq("userData", user));
+			userCount += (long) criteria.uniqueResult();
 
-	public void queryIsDeleted(QueryData queryData) {
-		Session querySession = null;
+			criteria = querySession.createCriteria(Activity.class)
+					.setProjection(Projections.rowCount());
+			criteria.add(Restrictions.eq("userCreated", user));
+			userCount += (long) criteria.uniqueResult();
 
-		try {
-			querySession = hibernateUtil.getSessionFactory().openSession();
+			criteria = querySession.createCriteria(FileSizeUsed.class);
+			criteria.add(Restrictions.eq("userOwner", user));
+			List<FileSizeUsed> fileSizeUseds = criteria.list();
+			for (FileSizeUsed fileSizeUsed : fileSizeUseds) {
+				userCount += Double.valueOf(fileSizeUsed.getFilesize())
+						.longValue();
+			}
 
-			queryIsDeleted(querySession, queryData);
-
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (querySession != null) {
-				try {
-					querySession.close();
-				} catch (Exception e) {
-
-				}
+			if (userCount > 0 && user.isIsdeleted()) {
+				user.setIsdeleted(false);
+				querySession.update(user);
+				querySession.flush();
+			} else if (userCount <= 0 && !user.isIsdeleted()) {
+				user.setIsdeleted(true);
+				querySession.update(user);
+				querySession.flush();
 			}
 		}
 	}
 
 	public void queryIsDeleted(Session querySession, QueryData queryData)
 			throws Exception {
-		long cuntData = 0;
+		if (queryData != null) {
+			long cuntData = 0;
+			querySession = hibernateUtil.getSessionFactory(querySession);
+			Criteria criteria = querySession.createCriteria(UsersQuery.class)
+					.setProjection(Projections.rowCount());
+			criteria.add(Restrictions.eq("queryData", queryData));
+			cuntData += (long) criteria.uniqueResult();
 
-		Criteria criteria = querySession.createCriteria(UsersQuery.class)
-				.setProjection(Projections.rowCount());
-		criteria.add(Restrictions.eq("queryData", queryData));
-		cuntData += (long) criteria.uniqueResult();
-
-		if (cuntData > 0 && queryData.isDeleted()) {
-			Transaction trx = querySession.beginTransaction();
-			queryData.setDeleted(false);
-			querySession.update(queryData);
-			trx.commit();
-		} else if (!queryData.isDeleted()) {
-			Transaction trx = querySession.beginTransaction();
-			queryData.setDeleted(true);
-			querySession.update(queryData);
-			trx.commit();
+			if (cuntData > 0 && queryData.isDeleted()) {
+				queryData.setDeleted(false);
+				querySession.update(queryData);
+				querySession.flush();
+			} else if (cuntData <= 0 && !queryData.isDeleted()) {
+				queryData.setDeleted(true);
+				querySession.update(queryData);
+				querySession.flush();
+			}
 		}
-		
 
-		
 	}
-	
+
 	public static boolean isValidEmailAddress(String email) {
-		   boolean result = true;
-		   try {
-		      InternetAddress emailAddr = new InternetAddress(email);
-		      emailAddr.validate();
-		   } catch (AddressException ex) {
-		      result = false;
-		   }
-		   return result;
+		boolean result = true;
+		try {
+			InternetAddress emailAddr = new InternetAddress(email);
+			emailAddr.validate();
+		} catch (AddressException ex) {
+			result = false;
 		}
+		return result;
+	}
 }

@@ -1,6 +1,7 @@
 package apps.controller.activity;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Session;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -8,8 +9,6 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.Foot;
-import org.zkoss.zul.Footer;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Label;
@@ -26,6 +25,7 @@ import apps.entity.FilesData;
 import apps.service.EmailService;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
+import apps.service.hibernateUtil;
 
 public class ActivityDetailWindow extends Window {
 	private static final long serialVersionUID = 6685464214209516187L;
@@ -42,6 +42,8 @@ public class ActivityDetailWindow extends Window {
 	private Textbox descriptionTextbox;
 	private Textbox emailToTextbox;
 	private Button searchUserEmailButton;
+	
+	private Session _session;
 
 	public ActivityDetailWindow(Activity activity) {
 		super("Query activity detail management", null, true);
@@ -100,10 +102,11 @@ public class ActivityDetailWindow extends Window {
 								"Question", Messagebox.YES | Messagebox.NO,
 								Messagebox.QUESTION) == Messagebox.YES) {
 							refreshActivity = true;
+							_session = hibernateUtil.getSessionFactory(_session);
 							serviceMain
-									.saveUserActivity("Delete activity with query name "
+									.saveUserActivity(_session, "Delete activity with query name "
 											+ _activity.getQueryName());
-							serviceMain.deleteActivity(_activity);
+							serviceMain.deleteActivity(_session, _activity);
 							detach();
 						}
 					}
@@ -336,7 +339,7 @@ public class ActivityDetailWindow extends Window {
 									subjectTextbox.getValue(),
 									descriptionTextbox.getValue());
 							serviceMain
-									.saveUserActivity("Send email with \nSubject "
+									.saveUserActivity(_session, "Send email with \nSubject "
 											+ emailObject.getSubject()
 											+ "\nDescription "
 											+ emailObject.getDescription());

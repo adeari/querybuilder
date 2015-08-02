@@ -41,6 +41,8 @@ public class UserEmailWindow  extends Window {
 	private Textbox usernameSearchTextbox;
 	private Textbox emailSearchTextbox;
 	
+	private Session _session;
+	
 	public UserEmailWindow() {
 		super("User's email", null, true);
 		window = this;
@@ -136,11 +138,10 @@ public class UserEmailWindow  extends Window {
 	}
 	
 	private void refreshListbox() {
-		Session session = null;
 		try {
-			session = hibernateUtil.getSessionFactory().openSession();
-
-			Criteria criteria = session.createCriteria(Users.class);
+			_session = hibernateUtil.getSessionFactory(_session);
+			_session.clear();
+			Criteria criteria = _session.createCriteria(Users.class);
 			criteria.add(Restrictions.isNotNull("email"));
 			criteria.add(Restrictions.ne("email",""));
 			if (!usernameSearchTextbox.getValue().isEmpty()) {
@@ -153,15 +154,6 @@ public class UserEmailWindow  extends Window {
 			usersListbox.setModel(userListModelList);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (session != null) {
-				try {
-					session.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 
 		}
 	}

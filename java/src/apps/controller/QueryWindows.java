@@ -9,7 +9,6 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
@@ -63,6 +62,8 @@ public class QueryWindows extends Window {
 	private Button saveQueryButton;
 
 	// End Component
+
+	private org.hibernate.Session _querySession;
 
 	public QueryWindows(String title, QueryData queryData) {
 		super(title, null, true);
@@ -146,28 +147,25 @@ public class QueryWindows extends Window {
 				if (!saveQueryButton.isDisabled()) {
 					saveQueryButton.setDisabled(true);
 
-					boolean canSaved = true;
-
-					org.hibernate.Session querySession = null;
 					try {
-						querySession = hibernateUtil.getSessionFactory()
-								.openSession();
+						_querySession = hibernateUtil
+								.getSessionFactory(_querySession);
 
 						if (_driverName == null || (_driverName.isEmpty())) {
 							Messagebox.show("Please choose Table on left",
 									"Information", Messagebox.OK,
 									Messagebox.INFORMATION);
-							canSaved = false;
+							return;
 						} else if (_url == null || (_url.isEmpty())) {
 							Messagebox.show("Please choose Table on left",
 									"Information", Messagebox.OK,
 									Messagebox.INFORMATION);
-							canSaved = false;
+							return;
 						} else if (textQuery.getValue().isEmpty()) {
 							textQuery.setFocus(true);
 							Messagebox.show("Enter query", "Information",
 									Messagebox.OK, Messagebox.INFORMATION);
-							canSaved = false;
+							return;
 						} else {
 							Connection connection = null;
 							try {
@@ -188,7 +186,7 @@ public class QueryWindows extends Window {
 								Messagebox.show("Query syntax was wrong",
 										"Information", Messagebox.OK,
 										Messagebox.INFORMATION);
-								canSaved = false;
+								return;
 							} finally {
 								if (connection != null) {
 									try {
@@ -201,82 +199,69 @@ public class QueryWindows extends Window {
 							}
 						}
 
-						if (canSaved) {
-							int dataSize = 0;
-							Criteria criteria = querySession
-									.createCriteria(QueryData.class);
-							criteria.add(Restrictions.eq("sql",
-									textQuery.getValue()));
-							if (_queryData != null) {
-								criteria.add(Restrictions.ne("id",
-										_queryData.getId()));
-							}
-							dataSize = criteria.list().size();
-							if (dataSize > 0) {
-								Messagebox.show("This query already exist",
-										"Information", Messagebox.OK,
-										Messagebox.INFORMATION);
+						int dataSize = 0;
+						Criteria criteria = _querySession
+								.createCriteria(QueryData.class);
+						criteria.add(Restrictions.eq("sql",
+								textQuery.getValue()));
+						if (_queryData != null) {
+							criteria.add(Restrictions.ne("id",
+									_queryData.getId()));
+						}
+						dataSize = criteria.list().size();
+						if (dataSize > 0) {
+							Messagebox.show("This query already exist",
+									"Information", Messagebox.OK,
+									Messagebox.INFORMATION);
+						} else {
+							if (_queryData == null) {
+								QuerySavedWindow querySavedWindow = new QuerySavedWindow(
+										"Add query", _driverName, _url,
+										textQuery.getValue());
+								queryWindow.appendChild(querySavedWindow);
+								querySavedWindow.setWidth("400px");
+								querySavedWindow.doModal();
+
 							} else {
-								if (_queryData == null) {
-									QuerySavedWindow querySavedWindow = new QuerySavedWindow(
-											"Add query", _driverName, _url,
-											textQuery.getValue());
-									queryWindow.appendChild(querySavedWindow);
-									querySavedWindow.setWidth("400px");
-									querySavedWindow.doModal();
 
-								} else {
-									Transaction trx = querySession
-											.beginTransaction();
+								org.zkoss.zk.ui.Session sessionLocal = Sessions
+										.getCurrent();
+								Users user = (Users) sessionLocal
+										.getAttribute("userlogin");
 
-									org.zkoss.zk.ui.Session sessionLocal = Sessions
-											.getCurrent();
-									Users user = (Users) sessionLocal
-											.getAttribute("userlogin");
+								Users userBefore = _queryData.getModifiedBy();
 
-									Users userBefore = _queryData
-											.getModifiedBy();
+								_queryData.setDriver(_driverName);
+								_queryData.setSql(textQuery.getValue());
+								_queryData.setConnectionString(_url);
+								_queryData.setModifiedBy(user);
+								_queryData
+										.setModifiedAt(new java.sql.Timestamp(
+												new Date().getTime()));
 
-									_queryData.setDriver(_driverName);
-									_queryData.setSql(textQuery.getValue());
-									_queryData.setConnectionString(_url);
-									_queryData.setModifiedBy(user);
-									_queryData
-											.setModifiedAt(new java.sql.Timestamp(
-													new Date().getTime()));
-
-									querySession.update(_queryData);
-
+								_querySession.update(_queryData);
+								_querySession.flush();
+								if (user.isIsdeleted()) {
 									user.setIsdeleted(false);
-									querySession.update(user);
-
-									trx.commit();
-									if (!userBefore.equals(user)) {
-										checkService.userIsDeleted(userBefore);
-									}
-									serviceMain.saveUserActivity("Query "
-											+ _queryData.getNamed()
-											+ " editted");
-									queryWindow.detach();
-
+									_querySession.update(user);
+									_querySession.flush();
 								}
+								if (!userBefore.equals(user)) {
+									checkService.userIsDeleted(_querySession,
+											userBefore);
+								}
+								serviceMain.saveUserActivity(_querySession,
+										"Query " + _queryData.getNamed()
+												+ " editted");
+								queryWindow.detach();
+
 							}
 						}
 
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);
 
-					} finally {
-						if (querySession != null) {
-							try {
-								querySession.close();
-							} catch (Exception e) {
-								logger.error(e.getMessage(), e);
-							}
-						}
-
 					}
-
 					saveQueryButton.setDisabled(false);
 				}
 			}
@@ -466,7 +451,8 @@ public class QueryWindows extends Window {
 								} else {
 									querySelect += ", " + ColumnName;
 									if (!columnType.equalsIgnoreCase("[B")) {
-										querySelectForAccess += ", " + ColumnName;
+										querySelectForAccess += ", "
+												+ ColumnName;
 										queryInsertValues += ", " + columnValue;
 										queryUpdateValues += ", " + ColumnName
 												+ " = " + columnValue;
@@ -505,7 +491,7 @@ public class QueryWindows extends Window {
 											+ columnTypeName + " can't access");
 									menuitem.setParent(menupopupItemColumn);
 									menuitem.setImage("image/delete-icon.png");
-									
+
 									treeitemColumn
 											.setContext(menupopupItemColumn);
 									treeitemColumn

@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.lang.Library;
 import org.zkoss.zk.ui.Executions;
@@ -36,6 +35,7 @@ import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
 import org.zkoss.zul.Selectbox;
 import org.zkoss.zul.Textbox;
+import org.zkoss.zul.Timer;
 import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.Window;
 
@@ -91,6 +91,8 @@ public class MenuWindow extends Window {
 	private Textbox fileSizeSearchingTextbox;
 
 	private Textbox totalFileSizeTextbox;
+	
+	private org.hibernate.Session _querySession;
 
 	public MenuWindow(Window windowMain) {
 		super(null, null, false);
@@ -356,26 +358,14 @@ public class MenuWindow extends Window {
 										.getElementAt(
 												selectbox.getSelectedIndex())
 										.toString().toLowerCase());
-						org.hibernate.Session querySession = null;
 						try {
-							querySession = hibernateUtil.getSessionFactory()
-									.openSession();
+							_querySession = hibernateUtil.getSessionFactory(_querySession);
 							_user.setTheme(Library
 									.getProperty("org.zkoss.theme.preferred"));
-							Transaction trx = querySession.beginTransaction();
-							querySession.update(_user);
-							trx.commit();
+							_querySession.update(_user);
+							_querySession.flush();
 						} catch (Exception e) {
 							logger.error(e.getMessage(), e);
-						} finally {
-							if (querySession != null) {
-								try {
-									querySession.close();
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-								}
-							}
-
 						}
 						Executions.sendRedirect(null);
 					}
@@ -582,14 +572,19 @@ public class MenuWindow extends Window {
 		searchImage.setParent(fileSizeAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
 
+		
 		settingForLoginUser();
+		
+		
+		
+		
 	}
 
-	public void refreshActivityListbox() {
-		org.hibernate.Session sessionSelect = null;
+	private void refreshActivityListbox() {
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect.createCriteria(Activity.class);
+			_querySession = hibernateUtil.getSessionFactory(_querySession);
+			_querySession.clear();
+			Criteria criteria = _querySession.createCriteria(Activity.class);
 			if (!_user.getDivisi().equalsIgnoreCase("admin")) {
 				criteria.add(Restrictions.eq("userCreated", _user));
 			}
@@ -655,7 +650,7 @@ public class MenuWindow extends Window {
 					(List<Activity>) criteria.list()));
 
 			if (_user.getDivisi().equalsIgnoreCase("admin")) {
-				criteria = sessionSelect.createCriteria(FileSizeTotal.class);
+				criteria = _querySession.createCriteria(FileSizeTotal.class);
 				FileSizeTotal fileSizeTotal = (FileSizeTotal) criteria
 						.uniqueResult();
 				if (fileSizeTotal != null) {
@@ -663,7 +658,7 @@ public class MenuWindow extends Window {
 							.getFilesizeShow());
 				}
 			} else {
-				criteria = sessionSelect.createCriteria(FileSizeUsed.class);
+				criteria = _querySession.createCriteria(FileSizeUsed.class);
 				criteria.add(Restrictions.eq("userOwner", _user));
 				FileSizeUsed fileSizeUsed = (FileSizeUsed) criteria
 						.uniqueResult();
@@ -676,20 +671,13 @@ public class MenuWindow extends Window {
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
+		
 	}
 
 	public void logout() {
 		if (_user != null) {
-			serviceMain.saveUserActivity("Logout");
+			serviceMain.saveUserActivity(_querySession, "Logout");
 			_session.removeAttribute("userlogin");
 
 			MenuWindow menuWindow = (MenuWindow) mainWindow.getChildren()
@@ -708,7 +696,7 @@ public class MenuWindow extends Window {
 		if (_user == null) {
 			logout();
 		} else {
-			serviceMain.saveUserActivity("Login");
+			serviceMain.saveUserActivity(_querySession, "Login");
 			if (_user.getDivisi().equalsIgnoreCase("Admin")) {
 				usersMenuitem.setVisible(true);
 				queryBuilderMenuitem.setVisible(true);
@@ -726,6 +714,15 @@ public class MenuWindow extends Window {
 			topAuxheader.setLabel(_user.getUsername() + "'s query activity");
 
 			refreshActivityListbox();
+			Timer timer = new Timer(10000);
+			timer.setParent(menuWindow);
+			timer.addEventListener(Events.ON_TIMER, new EventListener<Event>() {  
+		        public void onEvent(Event evt) {  
+		        	refreshActivityListbox();
+		     }  
+		 });
+			timer.setRepeats(true);
+			timer.setRunning(true);
 		}
 
 	}
@@ -811,7 +808,7 @@ public class MenuWindow extends Window {
 														.getFilename());
 										try {
 											serviceMain
-													.saveUserActivity("Download file "
+													.saveUserActivity(_querySession, "Download file "
 															+ file.getName());
 											Filedownload.save(file,
 													activitySelected

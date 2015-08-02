@@ -3,7 +3,6 @@ package apps.controller.users;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.WrongValueException;
@@ -13,7 +12,6 @@ import org.zkoss.zul.Button;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Label;
-import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Rows;
 import org.zkoss.zul.Textbox;
@@ -33,6 +31,8 @@ public class ProfileWindow extends Window {
 	private Users _user;
 
 	private Textbox emailTextbox;
+
+	private Session _querySession;
 
 	public ProfileWindow(String title, Users user) {
 		super(title, null, true);
@@ -84,25 +84,24 @@ public class ProfileWindow extends Window {
 					canSaved = false;
 					throw new WrongValueException(emailTextbox, "Enter email");
 				}
-				
+
 				if (canSaved && !emailTextbox.getValue().isEmpty()) {
 					CheckService checkService = new CheckService();
-					if (!checkService
-							.isValidEmailAddress(emailTextbox
-									.getValue())) {
+					if (!checkService.isValidEmailAddress(emailTextbox
+							.getValue())) {
 						canSaved = false;
-						throw new WrongValueException(emailTextbox, "Email is not correct");
+						throw new WrongValueException(emailTextbox,
+								"Email is not correct");
 					}
 				}
 
 				if (canSaved) {
-					Session querySession = null;
 					long emailCount = 0;
 					try {
-						querySession = hibernateUtil.getSessionFactory()
-								.openSession();
+						_querySession = hibernateUtil
+								.getSessionFactory(_querySession);
 
-						Criteria criteria = querySession.createCriteria(
+						Criteria criteria = _querySession.createCriteria(
 								Users.class).setProjection(
 								Projections.rowCount());
 						criteria.add(Restrictions.eq("email",
@@ -111,14 +110,6 @@ public class ProfileWindow extends Window {
 						emailCount = (long) criteria.uniqueResult();
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);
-					} finally {
-						if (querySession != null) {
-							try {
-								querySession.close();
-							} catch (Exception e) {
-							}
-						}
-
 					}
 					if (emailCount > 0) {
 						canSaved = false;
@@ -128,27 +119,18 @@ public class ProfileWindow extends Window {
 				}
 
 				if (canSaved) {
-					Session querySession = null;
 					try {
-						querySession = hibernateUtil.getSessionFactory()
-								.openSession();
-						Transaction trx = querySession.beginTransaction();
+						_querySession = hibernateUtil
+								.getSessionFactory(_querySession);
 						_user.setEmail(emailTextbox.getValue());
-						querySession.update(_user);
-						trx.commit();
+							_querySession.update(_user);
+							_querySession.flush();
 						ServiceMain serviceMain = new ServiceImplMain();
-						serviceMain.saveUserActivity("Profile changed");
+						serviceMain.saveUserActivity(_querySession,
+								"Profile changed");
 						detach();
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);
-					} finally {
-						if (querySession != null) {
-							try {
-								querySession.close();
-							} catch (Exception e) {
-							}
-						}
-
 					}
 
 				}

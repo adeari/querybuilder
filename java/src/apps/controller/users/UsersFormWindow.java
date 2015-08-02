@@ -3,7 +3,6 @@ package apps.controller.users;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
@@ -48,6 +47,8 @@ public class UsersFormWindow extends Window {
 	private Div div;
 
 	private ServiceMain serviceMain;
+
+	private Session _sessionSelect;
 
 	public UsersFormWindow(String title, Users user) {
 		super(title, null, true);
@@ -157,28 +158,25 @@ public class UsersFormWindow extends Window {
 						if (!saveButton.isDisabled()) {
 							saveButton.setDisabled(true);
 
-							boolean canSAve = true;
-							if (canSAve && usernameTextbox.getValue().isEmpty()) {
+							if (usernameTextbox.getValue().isEmpty()) {
 								commentLabel.setValue("Enter user name");
 								div.setVisible(true);
 								usernameTextbox.setFocus(true);
-								canSAve = false;
+								return;
 							}
-							if (canSAve && emailTextbox.getValue().isEmpty()) {
+							if (emailTextbox.getValue().isEmpty()) {
 								commentLabel.setValue("Enter email");
 								div.setVisible(true);
 								emailTextbox.setFocus(true);
-								canSAve = false;
+								return;
 							}
 
-							if (canSAve
-									&& !usernameTextbox.getValue().isEmpty()) {
+							if (!usernameTextbox.getValue().isEmpty()) {
 
-								Session sessionSelect = null;
 								try {
-									sessionSelect = hibernateUtil
-											.getSessionFactory().openSession();
-									Criteria criteria = sessionSelect
+									_sessionSelect = hibernateUtil
+											.getSessionFactory(_sessionSelect);
+									Criteria criteria = _sessionSelect
 											.createCriteria(Users.class);
 									criteria.add(Restrictions.eq("username",
 											usernameTextbox.getValue()));
@@ -191,24 +189,15 @@ public class UsersFormWindow extends Window {
 												.setValue("This username already exist");
 										div.setVisible(true);
 										usernameTextbox.setFocus(true);
-										canSAve = false;
+										return;
 									}
 								} catch (Exception e) {
 									logger.error(e.getMessage(), e);
 
-								} finally {
-									if (sessionSelect != null) {
-										try {
-											sessionSelect.close();
-										} catch (Exception e) {
-											logger.error(e.getMessage(), e);
-										}
-									}
-
 								}
 							}
 
-							if (canSAve && !emailTextbox.getValue().isEmpty()) {
+							if (!emailTextbox.getValue().isEmpty()) {
 								CheckService checkService = new CheckService();
 								if (!checkService
 										.isValidEmailAddress(emailTextbox
@@ -217,17 +206,16 @@ public class UsersFormWindow extends Window {
 											.setValue("This email not correct email");
 									div.setVisible(true);
 									emailTextbox.setFocus(true);
-									canSAve = false;
+									return;
 								}
 							}
 
-							if (canSAve && !emailTextbox.getValue().isEmpty()) {
+							if (!emailTextbox.getValue().isEmpty()) {
 
-								Session sessionSelect = null;
 								try {
-									sessionSelect = hibernateUtil
-											.getSessionFactory().openSession();
-									Criteria criteria = sessionSelect
+									_sessionSelect = hibernateUtil
+											.getSessionFactory(_sessionSelect);
+									Criteria criteria = _sessionSelect
 											.createCriteria(Users.class);
 									criteria.add(Restrictions.eq("email",
 											emailTextbox.getValue()));
@@ -240,135 +228,106 @@ public class UsersFormWindow extends Window {
 												.setValue("This email already exist");
 										div.setVisible(true);
 										emailTextbox.setFocus(true);
-										canSAve = false;
+										return;
 									}
 								} catch (Exception e) {
 									logger.error(e.getMessage(), e);
-
-								} finally {
-									if (sessionSelect != null) {
-										try {
-											sessionSelect.close();
-										} catch (Exception e) {
-											logger.error(e.getMessage(), e);
-										}
-									}
 
 								}
 							}
 
 							if (_user == null) {
-								if (canSAve
-										&& passwordTextbox.getValue().isEmpty()) {
+								if (passwordTextbox.getValue().isEmpty()) {
 									commentLabel.setValue("Enter password");
 									div.setVisible(true);
 									passwordTextbox.setFocus(true);
-									canSAve = false;
+									return;
 								}
 
-								if (canSAve
-										&& password2Textbox.getValue()
-												.isEmpty()) {
+								if (password2Textbox.getValue().isEmpty()) {
 									commentLabel.setValue("Enter re password");
 									div.setVisible(true);
 									password2Textbox.setFocus(true);
-									canSAve = false;
+									return;
 								}
 							}
 
-							if (canSAve
-									&& (passwordTextbox.getValue().length() > 0 || password2Textbox
-											.getValue().length() > 0)) {
-								if (canSAve
-										&& passwordTextbox.getValue().length() < 6) {
+							if ((passwordTextbox.getValue().length() > 0 || password2Textbox
+									.getValue().length() > 0)) {
+								if (passwordTextbox.getValue().length() < 6) {
 									commentLabel
 											.setValue("Enter more then 5 characters");
 									div.setVisible(true);
 									passwordTextbox.setFocus(true);
-									canSAve = false;
+									return;
 								}
 
-								if (canSAve
-										&& !password2Textbox
-												.getValue()
-												.toString()
-												.equalsIgnoreCase(
-														passwordTextbox
-																.getValue()
-																.toString())) {
+								if (!password2Textbox
+										.getValue()
+										.toString()
+										.equalsIgnoreCase(
+												passwordTextbox.getValue()
+														.toString())) {
 									commentLabel.setValue("password not same");
 									div.setVisible(true);
 									password2Textbox.setFocus(true);
-									canSAve = false;
+									return;
 								}
 							}
 
-							if (canSAve) {
-								Session session = null;
-								try {
-									session = hibernateUtil.getSessionFactory()
-											.openSession();
-									if (_user == null) {
-										Transaction trx = session
-												.beginTransaction();
-										Users tbUsers = new Users(
-												usernameTextbox.getValue(),
-												serviceMain
-														.convertPass(password2Textbox
-																.getValue()),
-												divisiSelectbox
-														.getModel()
-														.getElementAt(
-																divisiSelectbox
-																		.getSelectedIndex())
-														.toString(), true,
-												emailTextbox.getValue());
-
-										session.save(tbUsers);
-										serviceMain
-												.saveUserActivity("Username "
-														+ tbUsers.getUsername()
-														+ " created");
-										trx.commit();
-										_eventName = "Add";
-									} else {
-										Transaction trx = session
-												.beginTransaction();
-										if (!password2Textbox.getValue()
-												.isEmpty()) {
-											_user.setPass(serviceMain
+							try {
+								_sessionSelect = hibernateUtil
+										.getSessionFactory(_sessionSelect);
+								if (_user == null) {
+									Users tbUsers = new Users(
+											usernameTextbox.getValue(),
+											serviceMain
 													.convertPass(password2Textbox
-															.getValue()));
-										}
-										_user.setDivisi(divisiSelectbox
-												.getModel()
-												.getElementAt(
-														divisiSelectbox
-																.getSelectedIndex())
-												.toString());
-										_user.setEmail(emailTextbox.getValue());
-										session.update(_user);
-										serviceMain
-												.saveUserActivity("Username "
-														+ _user.getUsername()
-														+ " editted");
-										trx.commit();
-										_eventName = "Edit";
-									}
-									detach();
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
+															.getValue()),
+											divisiSelectbox
+													.getModel()
+													.getElementAt(
+															divisiSelectbox
+																	.getSelectedIndex())
+													.toString(), true,
+											emailTextbox.getValue());
 
-								} finally {
-									if (session != null) {
-										try {
-											session.close();
-										} catch (Exception e) {
-											logger.error(e.getMessage(), e);
-										}
+									_sessionSelect.save(tbUsers);
+									serviceMain.saveUserActivity(
+											_sessionSelect, "Username "
+													+ tbUsers.getUsername()
+													+ " created");
+									_eventName = "Add";
+								} else {
+									if (!password2Textbox.getValue().isEmpty()) {
+										_user.setPass(serviceMain
+												.convertPass(password2Textbox
+														.getValue()));
 									}
+									_user.setDivisi(divisiSelectbox
+											.getModel()
+											.getElementAt(
+													divisiSelectbox
+															.getSelectedIndex())
+											.toString());
+									_user.setEmail(emailTextbox.getValue());
+									try {
+										_sessionSelect.update(_user);
+										_sessionSelect.flush();
+									} catch (Exception e) {
+
+									}
+									serviceMain.saveUserActivity(
+											_sessionSelect,
+											"Username " + _user.getUsername()
+													+ " editted");
+									_eventName = "Edit";
 
 								}
+								detach();
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
+
 							}
 
 							saveButton.setDisabled(false);

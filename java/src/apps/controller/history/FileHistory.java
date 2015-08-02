@@ -1,13 +1,10 @@
 package apps.controller.history;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
-import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -32,7 +29,6 @@ import apps.components.ButtonCustom;
 import apps.controller.activity.ActivityDetailWindow;
 import apps.entity.Activity;
 import apps.entity.UserActivity;
-import apps.entity.Users;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
 import apps.service.hibernateUtil;
@@ -54,6 +50,8 @@ public class FileHistory extends Window {
 	private Textbox fileSizedSearchTextbox;
 
 	private Button deleteButton;
+	
+	private org.hibernate.Session _sessionSelect;
 
 	public FileHistory() {
 		super("My activity", null, true);
@@ -281,8 +279,8 @@ public class FileHistory extends Window {
 								Messagebox.QUESTION) == Messagebox.YES) {
 							for (Listitem listitem : listbox.getSelectedItems()) {
 								Activity activitySelected = listitem.getValue();
-								serviceMain.saveUserActivity("delete task activity with name = "+activitySelected.getQueryName());
-								serviceMain.deleteActivity(activitySelected);
+								serviceMain.saveUserActivity(_sessionSelect, "delete task activity with name = "+activitySelected.getQueryName());
+								serviceMain.deleteActivity(_sessionSelect, activitySelected);
 							}
 							refreshListbox();
 						}
@@ -293,10 +291,10 @@ public class FileHistory extends Window {
 	}
 
 	private void refreshListbox() {
-		org.hibernate.Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect.createCriteria(Activity.class);
+			_sessionSelect = hibernateUtil.getSessionFactory(_sessionSelect);
+			_sessionSelect.clear();
+			Criteria criteria = _sessionSelect.createCriteria(Activity.class);
 			criteria.add(Restrictions.isNotNull("doneAt"));
 
 			if (!queryNameSearchTextbox.getValue().isEmpty()) {
@@ -320,14 +318,6 @@ public class FileHistory extends Window {
 					(List<UserActivity>) criteria.list()));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
 	}
 

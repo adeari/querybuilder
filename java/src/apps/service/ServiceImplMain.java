@@ -23,7 +23,6 @@ import java.util.Properties;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Sessions;
@@ -176,12 +175,12 @@ public class ServiceImplMain implements ServiceMain {
 						}
 						rowsResult.setParent(gridResult);
 
-						saveUserActivity("Query : " + sql + " \nOn " + url
+						saveUserActivity(null, "Query : " + sql + " \nOn " + url
 								+ " \nResult : success");
 						return (Component) gridResult;
 					} else {
 						Label labelResult = new Label(messageHandle);
-						saveUserActivity("Query : " + sql + " \nOn " + url
+						saveUserActivity(null, "Query : " + sql + " \nOn " + url
 								+ " \nResult : " + messageHandle);
 						return labelResult;
 					}
@@ -193,7 +192,7 @@ public class ServiceImplMain implements ServiceMain {
 					preparedStatement.close();
 				}
 				Label labelResult = new Label(messageHandle);
-				saveUserActivity("Query : " + sql + " \nOn " + url
+				saveUserActivity(null, "Query : " + sql + " \nOn " + url
 						+ " \nResult : " + messageHandle);
 				return labelResult;
 			} else if (sql.toUpperCase().trim().startsWith("DELETE")) {
@@ -201,7 +200,7 @@ public class ServiceImplMain implements ServiceMain {
 						Messagebox.YES | Messagebox.NO, Messagebox.QUESTION) == Messagebox.YES) {
 					preparedStatement.executeUpdate();
 					Label labelResult = new Label("Process Done");
-					saveUserActivity("Query : " + sql + " \nOn " + url
+					saveUserActivity(null, "Query : " + sql + " \nOn " + url
 							+ " \nResult : success");
 					preparedStatement.close();
 					return labelResult;
@@ -212,7 +211,7 @@ public class ServiceImplMain implements ServiceMain {
 			} else {
 				preparedStatement.executeUpdate();
 				Label labelResult = new Label("Process Done");
-				saveUserActivity("Query : " + sql + " \nOn " + url
+				saveUserActivity(null, "Query : " + sql + " \nOn " + url
 						+ " \nResult : success");
 				preparedStatement.close();
 				return labelResult;
@@ -230,7 +229,7 @@ public class ServiceImplMain implements ServiceMain {
 			}
 		}
 		Label labelResult = new Label(messageHandle);
-		saveUserActivity("Query : " + sql + " \nOn " + url + " \nResult : "
+		saveUserActivity(null, "Query : " + sql + " \nOn " + url + " \nResult : "
 				+ messageHandle);
 		return labelResult;
 	}
@@ -278,11 +277,10 @@ public class ServiceImplMain implements ServiceMain {
 		return md5;
 	}
 
-	public Users get1UserByUsernameAndPassword(String username, String pass) {
+	public Users get1UserByUsernameAndPassword(Session sessionSelect, String username, String pass) {
 		Users user = null;
-		Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
+			sessionSelect = hibernateUtil.getSessionFactory(sessionSelect);
 			Criteria criteria = sessionSelect.createCriteria(Users.class);
 			criteria.add(Restrictions.eq("username", username));
 			criteria.add(Restrictions.eq("pass", convertPass(pass)));
@@ -290,21 +288,12 @@ public class ServiceImplMain implements ServiceMain {
 			if (criteria.list().size() > 0) {
 				user = (Users) criteria.uniqueResult();
 
-				Transaction trx = sessionSelect.beginTransaction();
 				user.setLast_loginAsDate(new Date());
 				sessionSelect.update(user);
-				trx.commit();
+				sessionSelect.flush();
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
 		return user;
 	}
@@ -334,36 +323,23 @@ public class ServiceImplMain implements ServiceMain {
 		}
 	}
 
-	public void saveUserActivity(String notes) {
+	public void saveUserActivity(Session session, String notes) {
 		if (Sessions.getCurrent().getAttribute("userlogin") != null) {
-			Session session = null;
 			try {
-				session = hibernateUtil.getSessionFactory().openSession();
+				session = hibernateUtil.getSessionFactory(session);
 				UserActivity userActivity = new UserActivity((Users) Sessions
 						.getCurrent().getAttribute("userlogin"), notes);
-				Transaction trx = session.beginTransaction();
 				session.save(userActivity);
-				trx.commit();
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
-			} finally {
-				if (session != null) {
-					try {
-						session.close();
-					} catch (Exception e) {
-						logger.error(e.getMessage(), e);
-					}
-				}
 			}
 		}
 	}
 
-	public void deleteActivity(Activity activity) {
-		org.hibernate.Session querySession = null;
+	public void deleteActivity(org.hibernate.Session querySession, Activity activity) {
 		try {
-			querySession = hibernateUtil.getSessionFactory().openSession();
-
 			if (activity.getFileData() != null) {
+				querySession = hibernateUtil.getSessionFactory(querySession);
 				FilesData filesData = activity.getFileData();
 				File file = new File(getQuery("location."
 						+ filesData.getFiletype().toLowerCase())
@@ -371,24 +347,13 @@ public class ServiceImplMain implements ServiceMain {
 				if (file.isFile()) {
 					file.delete();
 				}
-				Transaction trx = querySession.beginTransaction();
 				querySession.delete(filesData);
-				trx.commit();
+				querySession.flush();
 			}
-			Transaction trx = querySession.beginTransaction();
 			querySession.delete(activity);
-			trx.commit();
-
+			querySession.flush();
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-		} finally {
-			if (querySession != null) {
-				try {
-					querySession.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 		}
 	}
 

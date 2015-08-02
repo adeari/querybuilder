@@ -6,7 +6,6 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -59,6 +58,8 @@ public class QueryListWindow extends Window {
 	private Textbox modifiedBySearchingTextbox;
 
 	private ListModelList<QueryData> queryListModelList;
+	
+	private Session _session;
 
 	public QueryListWindow(String title) {
 		super(title, null, true);
@@ -386,32 +387,20 @@ public class QueryListWindow extends Window {
 									Users userBefore = selectedData
 											.getModifiedBy();
 
-									Session session = null;
+									
 									try {
-										session = hibernateUtil
-												.getSessionFactory()
-												.openSession();
+										_session = hibernateUtil
+												.getSessionFactory(_session);
 
-										Transaction trx = session
-												.beginTransaction();
-										session.delete(selectedData);
-										serviceMain.saveUserActivity("Query "
+										_session.delete(selectedData);
+										_session.flush();
+										serviceMain.saveUserActivity(_session, "Query "
 												+ selectedData.getNamed()
 												+ " deleted");
-										trx.commit();
 
-										checkService.userIsDeleted(userBefore);
+										checkService.userIsDeleted(_session, userBefore);
 									} catch (Exception e) {
 										logger.error(e.getMessage(), e);
-
-									} finally {
-										if (session != null) {
-											try {
-												session.close();
-											} catch (Exception e) {
-												logger.error(e.getMessage(), e);
-											}
-										}
 
 									}
 
@@ -480,10 +469,10 @@ public class QueryListWindow extends Window {
 	}
 
 	public void refreshGrid() {
-		Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect.createCriteria(QueryData.class);
+			_session = hibernateUtil.getSessionFactory(_session);
+			_session.clear();
+			Criteria criteria = _session.createCriteria(QueryData.class);
 
 			if (!sqlSearchingTextbox.getValue().isEmpty()) {
 				criteria.add(Restrictions.like("sql",
@@ -520,15 +509,6 @@ public class QueryListWindow extends Window {
 			grid.setModel(queryListModelList);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 
 		}
 	}

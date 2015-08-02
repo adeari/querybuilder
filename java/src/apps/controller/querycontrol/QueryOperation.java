@@ -40,6 +40,8 @@ public class QueryOperation extends Window {
 	private Window window;
 	
 	private Users _user;
+	
+	private org.hibernate.Session _querySession;
 
 
 	public QueryOperation(String title) {
@@ -126,11 +128,11 @@ public class QueryOperation extends Window {
 	
 	private void refreshGrid() {
 		Criteria criteria = null;
-		org.hibernate.Session querySession = null;
 		try {
-			querySession = hibernateUtil.getSessionFactory().openSession();
+			_querySession = hibernateUtil.getSessionFactory(_querySession);
+			_querySession.clear();
 			if (_user.getDivisi().equalsIgnoreCase("admin")) {
-				criteria = querySession.createCriteria(QueryData.class);
+				criteria = _querySession.createCriteria(QueryData.class);
 				if (!sqlSearchingTextbox.getValue().isEmpty()) {
 					criteria.add(Restrictions.like("sql",
 							sqlSearchingTextbox.getValue() + "%"));
@@ -139,7 +141,7 @@ public class QueryOperation extends Window {
 							namedSearchingTextbox.getValue() + "%"));
 				}
 			} else {
-				criteria = querySession.createCriteria(UsersQuery.class)
+				criteria = _querySession.createCriteria(UsersQuery.class)
 						.setProjection(Projections.groupProperty("queryData"));
 				criteria.add(Restrictions.eq("userData", _user));
 				if (!sqlSearchingTextbox.getValue().isEmpty()) {
@@ -156,15 +158,6 @@ public class QueryOperation extends Window {
 			listbox.setModel(new ListModelList<QueryData>(queryDatas));
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (querySession != null) {
-				try {
-					querySession.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 
 		}
 	}

@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
@@ -55,6 +54,8 @@ public class UsersWindow extends Window {
 	private Textbox usernameSearchingTextbox;
 	private Textbox divisiSearchingTextbox;
 	private Textbox emailSearchingTextbox;
+	
+	private Session _session;
 
 	public UsersWindow(String title) {
 		super(title, null, true);
@@ -377,32 +378,17 @@ public class UsersWindow extends Window {
 										Users userEvent = (Users) deleteEventButton
 												.getDataObject();
 										if (userEvent.isIsdeleted()) {
-											Session session = null;
 											try {
-												session = hibernateUtil
-														.getSessionFactory()
-														.openSession();
-												Transaction trx = session
-														.beginTransaction();
-												session.delete(userEvent);
-												serviceMain.saveUserActivity("Username "
+												_session = hibernateUtil
+														.getSessionFactory(_session);
+												_session.delete(userEvent);
+												_session.flush();
+												serviceMain.saveUserActivity(_session, "Username "
 														+ userEvent
 																.getUsername()
 														+ " deleted");
-												trx.commit();
 											} catch (Exception e) {
 												logger.error(e.getMessage(), e);
-
-											} finally {
-												if (session != null) {
-													try {
-														session.close();
-													} catch (Exception e) {
-														logger.error(
-																e.getMessage(),
-																e);
-													}
-												}
 
 											}
 										}
@@ -460,10 +446,10 @@ public class UsersWindow extends Window {
 
 	public void refreshGrid() {
 
-		Session sessionSelect = null;
 		try {
-			sessionSelect = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = sessionSelect.createCriteria(Users.class);
+			_session = hibernateUtil.getSessionFactory(_session);
+			_session.clear();
+			Criteria criteria = _session.createCriteria(Users.class);
 			if (!divisiSearchingTextbox.getValue().isEmpty()) {
 				criteria.add(Restrictions.like("divisi",
 						divisiSearchingTextbox.getValue() + "%"));
@@ -480,15 +466,6 @@ public class UsersWindow extends Window {
 			grid.setModel(usersListModelList);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (sessionSelect != null) {
-				try {
-					sessionSelect.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 
 		}
 	}

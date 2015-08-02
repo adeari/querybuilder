@@ -4,7 +4,6 @@ import java.util.Date;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
@@ -39,6 +38,8 @@ public class QuerySavedWindow extends Window {
 	private Textbox tableNameTextbox;
 	private Label commentLabel;
 	private Button saveButton;
+
+	private org.hibernate.Session _session;
 
 	public QuerySavedWindow(String title, String driverName, String url,
 			String sql) {
@@ -83,75 +84,57 @@ public class QuerySavedWindow extends Window {
 						if (!saveButton.isDisabled()) {
 							saveButton.setDisabled(true);
 
-							boolean canSave = true;
-							if (canSave
-									&& tableNameTextbox.getValue().isEmpty()) {
+							if (tableNameTextbox.getValue().isEmpty()) {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter table name");
 								tableNameTextbox.setFocus(true);
-								canSave = false;
+								return;
 							}
 
-							if (canSave) {
-								org.hibernate.Session session = null;
-								try {
-									session = hibernateUtil.getSessionFactory()
-											.openSession();
+							try {
+								_session = hibernateUtil
+										.getSessionFactory(_session);
 
-									if (canSave) {
-										Criteria criteria = session
-												.createCriteria(QueryData.class);
-										criteria.add(Restrictions.eq("named",
-												tableNameTextbox.getValue()));
-										if (criteria.list().size() > 0) {
-											commentLabel.setVisible(true);
-											commentLabel
-													.setValue("Table name already exist");
-											tableNameTextbox.setFocus(true);
-											tableNameTextbox.select();
-											canSave = false;
-										}
-									}
-
-									if (canSave) {
-										Transaction trx = session
-												.beginTransaction();
-
-										org.zkoss.zk.ui.Session sessionLocal = Sessions
-												.getCurrent();
-										Users user = (Users) sessionLocal
-												.getAttribute("userlogin");
-
-										QueryData queryData = new QueryData(
-												_driverName, _url,
-												tableNameTextbox.getValue(),
-												_sql, user, user, new Date(),
-												new Date());
-
-										session.save(queryData);
-
-										user.setIsdeleted(false);
-										session.update(user);
-										ServiceMain serviceMain = new ServiceImplMain();
-										serviceMain.saveUserActivity("Query with name "+tableNameTextbox.getValue()+" created");
-										trx.commit();
-
-										detach();
-									}
-								} catch (Exception e) {
-									logger.error(e.getMessage(), e);
-
-								} finally {
-									if (session != null) {
-										try {
-											session.close();
-
-										} catch (Exception e) {
-											logger.error(e.getMessage(), e);
-										}
-									}
-
+								Criteria criteria = _session
+										.createCriteria(QueryData.class);
+								criteria.add(Restrictions.eq("named",
+										tableNameTextbox.getValue()));
+								if (criteria.list().size() > 0) {
+									commentLabel.setVisible(true);
+									commentLabel
+											.setValue("Table name already exist");
+									tableNameTextbox.setFocus(true);
+									tableNameTextbox.select();
+									return;
 								}
+
+								org.zkoss.zk.ui.Session sessionLocal = Sessions
+										.getCurrent();
+								Users user = (Users) sessionLocal
+										.getAttribute("userlogin");
+
+								QueryData queryData = new QueryData(
+										_driverName, _url, tableNameTextbox
+												.getValue(), _sql, user, user,
+										new Date(), new Date());
+
+								_session.save(queryData);
+
+								if (user.isIsdeleted()) {
+									user.setIsdeleted(false);
+									_session.update(user);
+									_session.flush();
+								}
+								ServiceMain serviceMain = new ServiceImplMain();
+								serviceMain.saveUserActivity(
+										_session,
+										"Query with name "
+												+ tableNameTextbox.getValue()
+												+ " created");
+
+								detach();
+							} catch (Exception e) {
+								logger.error(e.getMessage(), e);
 
 							}
 

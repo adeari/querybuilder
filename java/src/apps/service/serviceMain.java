@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 
 import org.hibernate.Criteria;
+import org.hibernate.Session;
 import org.zkoss.zk.ui.Component;
 
 import apps.entity.Activity;
@@ -28,13 +29,13 @@ public interface ServiceMain {
 
 	public String convertPass(String pass);
 
-	public Users get1UserByUsernameAndPassword(String username, String pass);
+	public Users get1UserByUsernameAndPassword(Session sessionSelect, String username, String pass);
 
 	public Timestamp convertToTimeStamp(String format, String date);
 
-	public void saveUserActivity(String notes);
+	public void saveUserActivity(Session session, String notes);
 
-	public void deleteActivity(Activity activity);
+	public void deleteActivity(org.hibernate.Session querySession, Activity activity);
 
 	public Criteria getCriteriaAtDateBetween(Criteria criteria,
 			String columnName, String dateString);

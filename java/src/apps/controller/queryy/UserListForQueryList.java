@@ -6,7 +6,6 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -55,6 +54,8 @@ public class UserListForQueryList extends Window {
 	private Textbox userSearchTextbox;
 
 	private ServiceMain serviceMain;
+
+	private Session _session;
 
 	UserListForQueryList(String title, QueryData queryData) {
 		super(title, null, true);
@@ -106,10 +107,10 @@ public class UserListForQueryList extends Window {
 		sqlTextbox.setWidth("80%");
 		sqlTextbox.setReadonly(true);
 
-		Session session = null;
 		try {
-			session = hibernateUtil.getSessionFactory().openSession();
-			Criteria criteria = session.createCriteria(UsersQuery.class);
+			_session = hibernateUtil.getSessionFactory(_session);
+			_session.clear();
+			Criteria criteria = _session.createCriteria(UsersQuery.class);
 			criteria.add(Restrictions.eq("queryData", _queryData));
 			userIDOnData = new ArrayList<Integer>();
 			userQueries = criteria.list();
@@ -118,15 +119,6 @@ public class UserListForQueryList extends Window {
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (session != null) {
-				try {
-					session.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 
 		}
 
@@ -146,11 +138,9 @@ public class UserListForQueryList extends Window {
 						_userListWindow.setClosable(false);
 						List<Listitem> listitems = userListbox.getItems();
 						if (listitems.size() > 0) {
-							Session session = null;
 							try {
-								session = hibernateUtil.getSessionFactory()
-										.openSession();
-								Transaction trx = session.beginTransaction();
+								_session = hibernateUtil
+										.getSessionFactory(_session);
 
 								String message = "";
 								for (Listitem itemSelected : listitems) {
@@ -159,7 +149,7 @@ public class UserListForQueryList extends Window {
 									Users userSelected = (Users) listcellCustomize
 											.getDataObject();
 
-									Criteria criteria = session
+									Criteria criteria = _session
 											.createCriteria(UsersQuery.class);
 									criteria.add(Restrictions.eq("queryData",
 											_queryData));
@@ -171,9 +161,12 @@ public class UserListForQueryList extends Window {
 										UsersQuery usersQuery = new UsersQuery(
 												userSelected, _queryData);
 
-										session.save(usersQuery);
-										userSelected.setIsdeleted(false);
-										session.update(userSelected);
+										_session.save(usersQuery);
+										if (userSelected.isIsdeleted()) {
+											userSelected.setIsdeleted(false);
+											_session.update(userSelected);
+											_session.flush();
+										}
 										message += "Add user "
 												+ userSelected.getUsername()
 												+ " to "
@@ -183,31 +176,24 @@ public class UserListForQueryList extends Window {
 											&& criteria.list().size() > 0) {
 										UsersQuery usersQuery = (UsersQuery) criteria
 												.uniqueResult();
-										session.delete(usersQuery);
+										_session.delete(usersQuery);
+										_session.flush();
 										message += "Remove user "
 												+ userSelected.getUsername()
 												+ " in "
 												+ _queryData.getNamed() + "\n";
 
-										checkService
-												.userIsDeleted(userSelected);
+										checkService.userIsDeleted(_session,
+												userSelected);
 									}
 								}
-								trx.commit();
-								serviceMain.saveUserActivity(message);
 
-								checkService.queryIsDeleted(_queryData);
+								serviceMain.saveUserActivity(_session, message);
+
+								checkService.queryIsDeleted(_session,
+										_queryData);
 							} catch (Exception e) {
 								logger.error(e.getMessage(), e);
-
-							} finally {
-								if (session != null) {
-									try {
-										session.close();
-									} catch (Exception e) {
-										logger.error(e.getMessage(), e);
-									}
-								}
 
 							}
 						}
@@ -254,11 +240,10 @@ public class UserListForQueryList extends Window {
 	}
 
 	public void refreshUserGrid(String usernameSearch) {
-		Session session = null;
 		try {
-			session = hibernateUtil.getSessionFactory().openSession();
-
-			Criteria criteria = session.createCriteria(Users.class);
+			_session = hibernateUtil.getSessionFactory(_session);
+			_session.clear();
+			Criteria criteria = _session.createCriteria(Users.class);
 			criteria.add(Restrictions.ne("divisi", "admin").ignoreCase());
 			if (usernameSearch != null && (!usernameSearch.isEmpty())) {
 				criteria.add(Restrictions
@@ -269,15 +254,6 @@ public class UserListForQueryList extends Window {
 			userListbox.setModel(userListModelList);
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
-
-		} finally {
-			if (session != null) {
-				try {
-					session.close();
-				} catch (Exception e) {
-					logger.error(e.getMessage(), e);
-				}
-			}
 
 		}
 	}
@@ -294,7 +270,6 @@ public class UserListForQueryList extends Window {
 			item.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 				public void onEvent(Event itemEvent) {
 
-					Session session = null;
 					try {
 						Listitem itemSelected = (Listitem) itemEvent
 								.getTarget();
@@ -303,9 +278,8 @@ public class UserListForQueryList extends Window {
 						Users userSelected = (Users) listcellCustomize
 								.getDataObject();
 
-						session = hibernateUtil.getSessionFactory()
-								.openSession();
-						Criteria criteria = session
+						_session = hibernateUtil.getSessionFactory(_session);
+						Criteria criteria = _session
 								.createCriteria(UsersQuery.class);
 						criteria.add(Restrictions.eq("queryData", _queryData));
 						criteria.add(Restrictions.eq("userData", userSelected));
@@ -314,40 +288,35 @@ public class UserListForQueryList extends Window {
 								&& criteria.list().size() == 0) {
 							UsersQuery usersQuery = new UsersQuery(
 									userSelected, _queryData);
-							Transaction trx = session.beginTransaction();
-							session.save(usersQuery);
-							userSelected.setIsdeleted(false);
-							session.update(userSelected);
-							_queryData.setDeleted(false);
-							session.update(_queryData);
-							serviceMain.saveUserActivity("Add user "
+							_session.save(usersQuery);
+							if (userSelected.isIsdeleted()) {
+								userSelected.setIsdeleted(false);
+								_session.update(userSelected);
+								_session.flush();
+							}
+							if (_queryData.isDeleted()) {
+								_queryData.setDeleted(false);
+								_session.update(_queryData);
+								_session.flush();
+							}
+							serviceMain.saveUserActivity(_session, "Add user "
 									+ userSelected.getUsername() + " to "
 									+ _queryData.getNamed());
-							trx.commit();
 						} else if (!itemSelected.isSelected()
 								&& criteria.list().size() > 0) {
 							UsersQuery usersQuery = (UsersQuery) criteria
 									.uniqueResult();
-							Transaction trx = session.beginTransaction();
-							session.delete(usersQuery);
-							trx.commit();
-							checkService.queryIsDeleted(_queryData);
-							checkService.userIsDeleted(userSelected);
-							serviceMain.saveUserActivity("Remove user "
-									+ userSelected.getUsername() + " in "
-									+ _queryData.getNamed());
+							_session.delete(usersQuery);
+							_session.flush();
+							checkService.queryIsDeleted(_session, _queryData);
+							checkService.userIsDeleted(_session, userSelected);
+							serviceMain.saveUserActivity(_session,
+									"Remove user " + userSelected.getUsername()
+											+ " in " + _queryData.getNamed());
 						}
+
 					} catch (Exception e) {
 						logger.error(e.getMessage(), e);
-
-					} finally {
-						if (session != null) {
-							try {
-								session.close();
-							} catch (Exception e) {
-								logger.error(e.getMessage(), e);
-							}
-						}
 
 					}
 				}
