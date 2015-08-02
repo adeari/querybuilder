@@ -3,6 +3,7 @@ package apps.controller;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -93,10 +94,13 @@ public class MenuWindow extends Window {
 	private Textbox totalFileSizeTextbox;
 	
 	private org.hibernate.Session _querySession;
+	
+	private SimpleDateFormat _simpleDateFormat;
 
 	public MenuWindow(Window windowMain) {
 		super(null, null, false);
 		serviceMain = new ServiceImplMain();
+		_simpleDateFormat = new SimpleDateFormat();
 
 		_session = Sessions.getCurrent();
 		_user = (Users) _session.getAttribute("userlogin");
@@ -601,37 +605,37 @@ public class MenuWindow extends Window {
 			} else if (!createdAtSearchingTextbox.getValue().isEmpty()) {
 				Timestamp basic = serviceMain.convertToTimeStamp(
 						"dd/MM/yyyy HH:mm",
-						createdAtSearchingTextbox.getValue());
+						createdAtSearchingTextbox.getValue(), _simpleDateFormat);
 				if (basic == null) {
 					Timestamp lowTimestamp = serviceMain.convertToTimeStamp(
-							"dd/MM/yyyy", createdAtSearchingTextbox.getValue());
+							"dd/MM/yyyy", createdAtSearchingTextbox.getValue(), _simpleDateFormat);
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							createdAtSearchingTextbox.getValue() + " 23:59:59");
+							createdAtSearchingTextbox.getValue() + " 23:59:59", _simpleDateFormat);
 					criteria.add(Restrictions.between("createdAt",
 							lowTimestamp, highTimestamp));
 				} else {
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							createdAtSearchingTextbox.getValue() + ":59");
+							createdAtSearchingTextbox.getValue() + ":59", _simpleDateFormat);
 					criteria.add(Restrictions.between("createdAt", basic,
 							highTimestamp));
 				}
 			} else if (!doneAtSearchingTextbox.getValue().isEmpty()) {
 				Timestamp basic = serviceMain.convertToTimeStamp(
-						"dd/MM/yyyy HH:mm", doneAtSearchingTextbox.getValue());
+						"dd/MM/yyyy HH:mm", doneAtSearchingTextbox.getValue(), _simpleDateFormat);
 				if (basic == null) {
 					Timestamp lowTimestamp = serviceMain.convertToTimeStamp(
-							"dd/MM/yyyy", doneAtSearchingTextbox.getValue());
+							"dd/MM/yyyy", doneAtSearchingTextbox.getValue(), _simpleDateFormat);
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							doneAtSearchingTextbox.getValue() + " 23:59:59");
+							doneAtSearchingTextbox.getValue() + " 23:59:59", _simpleDateFormat);
 					criteria.add(Restrictions.between("doneAt", lowTimestamp,
 							highTimestamp));
 				} else {
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							doneAtSearchingTextbox.getValue() + ":59");
+							doneAtSearchingTextbox.getValue() + ":59", _simpleDateFormat);
 					criteria.add(Restrictions.between("doneAt", basic,
 							highTimestamp));
 				}
@@ -767,7 +771,7 @@ public class MenuWindow extends Window {
 			listitem.appendChild(new Listcell(activity.getFiletype()));
 			listitem.appendChild(new Listcell(serviceMain
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
-							activity.getCreatedAt())));
+							activity.getCreatedAt(),_simpleDateFormat)));
 			if (activity.getDoneAt() == null) {
 				Listcell listcell = new Listcell("Process...");
 				listcell.setSpan(3);
@@ -775,7 +779,7 @@ public class MenuWindow extends Window {
 			} else {
 				listitem.appendChild(new Listcell(serviceMain
 						.convertStringFromDate("dd/MM/yyyy HH:mm",
-								activity.getDoneAt())));
+								activity.getDoneAt(),_simpleDateFormat)));
 
 				boolean isFileexist = false;
 				if (activity.getFileData() != null) {

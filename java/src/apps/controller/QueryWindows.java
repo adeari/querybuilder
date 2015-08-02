@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
@@ -64,10 +65,13 @@ public class QueryWindows extends Window {
 	// End Component
 
 	private org.hibernate.Session _querySession;
+	
+	private SimpleDateFormat _simpleDateFormat;
 
 	public QueryWindows(String title, QueryData queryData) {
 		super(title, null, true);
 		queryWindow = this;
+		_simpleDateFormat = new SimpleDateFormat();
 
 		checkService = new CheckService();
 
@@ -438,7 +442,7 @@ public class QueryWindows extends Window {
 												ColumnName,
 												columnType,
 												resultSetMetaData
-														.getColumnDisplaySize(x));
+														.getColumnDisplaySize(x), _simpleDateFormat);
 
 								if (x == 1) {
 									querySelect += ColumnName;

@@ -2,6 +2,7 @@ package apps.service;
 
 import java.sql.Connection;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.hibernate.Criteria;
@@ -23,20 +24,20 @@ public interface ServiceMain {
 	public Component getResultGrid(String sql, String driverName, String url);
 
 	public String getValueColumn(String columnName, String columnType,
-			int columnLength);
+			int columnLength, SimpleDateFormat simpleDateFormat);
 
-	public String convertStringFromDate(String format, Date date);
+	public String convertStringFromDate(String format, Date date, SimpleDateFormat simpleDateFormat);
 
 	public String convertPass(String pass);
 
 	public Users get1UserByUsernameAndPassword(Session sessionSelect, String username, String pass);
 
-	public Timestamp convertToTimeStamp(String format, String date);
+	public Timestamp convertToTimeStamp(String format, String date, SimpleDateFormat simpleDateFormat);
 
 	public void saveUserActivity(Session session, String notes);
 
 	public void deleteActivity(org.hibernate.Session querySession, Activity activity);
 
 	public Criteria getCriteriaAtDateBetween(Criteria criteria,
-			String columnName, String dateString);
+			String columnName, String dateString, SimpleDateFormat simpleDateFormat);
 }

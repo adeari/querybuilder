@@ -1,5 +1,7 @@
 package apps.controller.activity;
 
+import java.text.SimpleDateFormat;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Session;
 import org.zkoss.zk.ui.Executions;
@@ -44,11 +46,14 @@ public class ActivityDetailWindow extends Window {
 	private Button searchUserEmailButton;
 	
 	private Session _session;
+	
+	private SimpleDateFormat _simpleDateFormat;
 
 	public ActivityDetailWindow(Activity activity) {
 		super("Query activity detail management", null, true);
 		serviceMain = new ServiceImplMain();
 		refreshActivity = false;
+		_simpleDateFormat = new SimpleDateFormat();
 
 		window = this;
 		_activity = activity;
@@ -165,7 +170,7 @@ public class ActivityDetailWindow extends Window {
 			startAtLabel.setParent(startAtRow);
 			Textbox startAtTextbox = new Textbox(
 					serviceMain.convertStringFromDate("dd/MM/yyyy",
-							_activity.getStartAt()));
+							_activity.getStartAt(), _simpleDateFormat));
 			startAtTextbox.setParent(startAtRow);
 			startAtTextbox.setReadonly(true);
 
@@ -175,7 +180,7 @@ public class ActivityDetailWindow extends Window {
 			doneAtLabel.setParent(doneAtRow);
 			Textbox doneAtTextbox = new Textbox(
 					serviceMain.convertStringFromDate("dd/MM/yyyy",
-							_activity.getDoneAt()));
+							_activity.getDoneAt(), _simpleDateFormat));
 			doneAtTextbox.setParent(doneAtRow);
 			doneAtTextbox.setReadonly(true);
 
@@ -185,7 +190,7 @@ public class ActivityDetailWindow extends Window {
 			createdAtLabel.setParent(createdAtRow);
 			Textbox createdAtTextbox = new Textbox(
 					serviceMain.convertStringFromDate("dd/MM/yyyy",
-							_activity.getCreatedAt()));
+							_activity.getCreatedAt(), _simpleDateFormat));
 			createdAtTextbox.setParent(createdAtRow);
 			createdAtTextbox.setReadonly(true);
 

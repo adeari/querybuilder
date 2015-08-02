@@ -45,7 +45,8 @@ public class ServiceImplMain implements ServiceMain {
 	private static String _fileproperties = "data.properties";
 	private static String _queryProperties = "query.properties";
 	private static String[] columnTypeDate = new String[] {
-			"java.sql.Timestamp", "java.sql.Date", "microsoft.sql.DateTimeOffset" };
+			"java.sql.Timestamp", "java.sql.Date",
+			"microsoft.sql.DateTimeOffset" };
 
 	public String getPropSetting(String key) {
 		try {
@@ -85,7 +86,7 @@ public class ServiceImplMain implements ServiceMain {
 		logger.error(ex.getMessage(), ex);
 	}
 
-	public Connection getConnection(String driverName, String url)  {
+	public Connection getConnection(String driverName, String url) {
 		try {
 			Class.forName(driverName).newInstance();
 			Connection conn = DriverManager.getConnection(url);
@@ -175,13 +176,13 @@ public class ServiceImplMain implements ServiceMain {
 						}
 						rowsResult.setParent(gridResult);
 
-						saveUserActivity(null, "Query : " + sql + " \nOn " + url
-								+ " \nResult : success");
+						saveUserActivity(null, "Query : " + sql + " \nOn "
+								+ url + " \nResult : success");
 						return (Component) gridResult;
 					} else {
 						Label labelResult = new Label(messageHandle);
-						saveUserActivity(null, "Query : " + sql + " \nOn " + url
-								+ " \nResult : " + messageHandle);
+						saveUserActivity(null, "Query : " + sql + " \nOn "
+								+ url + " \nResult : " + messageHandle);
 						return labelResult;
 					}
 				} catch (Exception e) {
@@ -229,13 +230,13 @@ public class ServiceImplMain implements ServiceMain {
 			}
 		}
 		Label labelResult = new Label(messageHandle);
-		saveUserActivity(null, "Query : " + sql + " \nOn " + url + " \nResult : "
-				+ messageHandle);
+		saveUserActivity(null, "Query : " + sql + " \nOn " + url
+				+ " \nResult : " + messageHandle);
 		return labelResult;
 	}
 
 	public String getValueColumn(String columnName, String columnType,
-			int columnLength) {
+			int columnLength, SimpleDateFormat simpleDateFormat) {
 		String valueInsert = "null";
 		if (columnType.equalsIgnoreCase("java.lang.String")) {
 			valueInsert = columnName;
@@ -244,18 +245,24 @@ public class ServiceImplMain implements ServiceMain {
 			}
 			valueInsert = "'" + valueInsert + "'";
 		} else if (columnType.equalsIgnoreCase("java.sql.Time")) {
-			valueInsert = "'" + (new SimpleDateFormat("HH:mm:ss")).format(new Date()) + "'";
+			simpleDateFormat.applyPattern("HH:mm:ss");
+			valueInsert = "'"
+					+ simpleDateFormat.format(new Date())
+					+ "'";
 		} else if (Arrays.asList(columnTypeDate).contains(columnType)) {
-			valueInsert = "'" + (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(new Date()) + "'";
+			simpleDateFormat.applyPattern("yyyy-MM-dd HH:mm:ss");
+			valueInsert = "'"
+					+ simpleDateFormat.format(new Date()) + "'";
 		} else {
 			valueInsert = "1";
 		}
 		return valueInsert;
 	}
 
-	public String convertStringFromDate(String format, Date date) {
+	public String convertStringFromDate(String format, Date date,
+			SimpleDateFormat simpleDateFormat) {
 		if (date != null) {
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(format);
+			simpleDateFormat.applyPattern(format);
 			return simpleDateFormat.format(date);
 		}
 		return "";
@@ -277,7 +284,8 @@ public class ServiceImplMain implements ServiceMain {
 		return md5;
 	}
 
-	public Users get1UserByUsernameAndPassword(Session sessionSelect, String username, String pass) {
+	public Users get1UserByUsernameAndPassword(Session sessionSelect,
+			String username, String pass) {
 		Users user = null;
 		try {
 			sessionSelect = hibernateUtil.getSessionFactory(sessionSelect);
@@ -298,13 +306,13 @@ public class ServiceImplMain implements ServiceMain {
 		return user;
 	}
 
-	public Timestamp convertToTimeStamp(String format, String date) {
+	public Timestamp convertToTimeStamp(String format, String date, SimpleDateFormat simpleDateFormat) {
 		if (date == null || (date.isEmpty())) {
 			return null;
 		}
-		SimpleDateFormat sdf = new SimpleDateFormat(format);
+		simpleDateFormat.applyPattern(format);
 		try {
-			return new Timestamp(sdf.parse(date).getTime());
+			return new Timestamp(simpleDateFormat.parse(date).getTime());
 		} catch (ParseException e) {
 			logger.error(e.getMessage(), e);
 			return null;
@@ -336,7 +344,8 @@ public class ServiceImplMain implements ServiceMain {
 		}
 	}
 
-	public void deleteActivity(org.hibernate.Session querySession, Activity activity) {
+	public void deleteActivity(org.hibernate.Session querySession,
+			Activity activity) {
 		try {
 			if (activity.getFileData() != null) {
 				querySession = hibernateUtil.getSessionFactory(querySession);
@@ -358,18 +367,18 @@ public class ServiceImplMain implements ServiceMain {
 	}
 
 	public Criteria getCriteriaAtDateBetween(Criteria criteria,
-			String columnName, String dateString) {
-		Timestamp basic = convertToTimeStamp("HH:mm:ss", dateString);
+			String columnName, String dateString, SimpleDateFormat simpleDateFormat) {
+		Timestamp basic = convertToTimeStamp("HH:mm:ss", dateString, simpleDateFormat);
 		if (basic == null) {
 			Timestamp lowTimestamp = convertToTimeStamp("dd/MM/yyyy",
-					dateString);
+					dateString, simpleDateFormat);
 			Timestamp highTimestamp = convertToTimeStamp("dd/MM/yyyy HH:mm:ss",
-					dateString + " 23:59:59");
+					dateString + " 23:59:59", simpleDateFormat);
 			criteria.add(Restrictions.between(columnName, lowTimestamp,
 					highTimestamp));
 		} else {
 			Timestamp highTimestamp = convertToTimeStamp("dd/MM/yyyy HH:mm:ss",
-					dateString + ":59");
+					dateString + ":59", simpleDateFormat);
 			criteria.add(Restrictions.between(columnName, basic, highTimestamp));
 		}
 		return criteria;

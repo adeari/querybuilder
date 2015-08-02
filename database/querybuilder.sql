@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: 07 Jul 2015 pada 18.33
+-- Generation Time: 02 Agu 2015 pada 08.21
 -- Versi Server: 5.6.17-log
 -- PHP Version: 5.5.12
 
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `tb_activity` (
   `show_duration` varchar(100) DEFAULT NULL,
   `duration_time` time DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=14 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=23 ;
 
 -- --------------------------------------------------------
 
@@ -62,8 +62,9 @@ CREATE TABLE IF NOT EXISTS `tb_file` (
   `filesize` double NOT NULL,
   `filesize_show` varchar(200) DEFAULT NULL,
   `download_link` varchar(200) NOT NULL,
+  `updated_at` date NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=135 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=155 ;
 
 -- --------------------------------------------------------
 
@@ -112,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `tb_query` (
   `isdeleted` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `named` (`named`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=25 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=27 ;
 
 -- --------------------------------------------------------
 
@@ -143,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `tb_users_query` (
   `user_id` int(11) NOT NULL,
   `query_id` int(11) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=79 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=120 ;
 
 -- --------------------------------------------------------
 
@@ -157,7 +158,7 @@ CREATE TABLE IF NOT EXISTS `tb_user_activity` (
   `user_id` int(11) NOT NULL,
   `notes` text NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=160 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=481 ;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

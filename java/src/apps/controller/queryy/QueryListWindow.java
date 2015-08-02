@@ -1,6 +1,7 @@
 package apps.controller.queryy;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -60,12 +61,15 @@ public class QueryListWindow extends Window {
 	private ListModelList<QueryData> queryListModelList;
 	
 	private Session _session;
+	
+	private SimpleDateFormat _simpleDateFormat;
 
 	public QueryListWindow(String title) {
 		super(title, null, true);
 		queryListWindow = this;
 		serviceMain = new ServiceImplMain();
 		checkService = new CheckService();
+		_simpleDateFormat = new SimpleDateFormat();
 
 		Borderlayout borderlayout = new Borderlayout();
 		borderlayout
@@ -458,7 +462,7 @@ public class QueryListWindow extends Window {
 			dateCell.setValign("top");
 			row.appendChild(dateCell);
 			dateCell.appendChild(new Label(serviceMain.convertStringFromDate(
-					"dd/MM/yyyy HH:mm", queryData.getModifiedAt())));
+					"dd/MM/yyyy HH:mm", queryData.getModifiedAt(), _simpleDateFormat)));
 
 			Cell modifiedBy = new Cell();
 			modifiedBy.setValign("top");
@@ -483,19 +487,19 @@ public class QueryListWindow extends Window {
 			} else if (!modifiedSearchingTextbox.getValue().isEmpty()) {
 				Timestamp basic = serviceMain
 						.convertToTimeStamp("dd/MM/yyyy HH:mm",
-								modifiedSearchingTextbox.getValue());
+								modifiedSearchingTextbox.getValue(), _simpleDateFormat);
 				if (basic == null) {
 					Timestamp lowTimestamp = serviceMain.convertToTimeStamp(
-							"dd/MM/yyyy", modifiedSearchingTextbox.getValue());
+							"dd/MM/yyyy", modifiedSearchingTextbox.getValue(), _simpleDateFormat);
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							modifiedSearchingTextbox.getValue() + " 23:59:59");
+							modifiedSearchingTextbox.getValue() + " 23:59:59", _simpleDateFormat);
 					criteria.add(Restrictions.between("modifiedAt",
 							lowTimestamp, highTimestamp));
 				} else {
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							modifiedSearchingTextbox.getValue() + ":59");
+							modifiedSearchingTextbox.getValue() + ":59", _simpleDateFormat);
 					criteria.add(Restrictions.between("modifiedAt", basic,
 							highTimestamp));
 				}

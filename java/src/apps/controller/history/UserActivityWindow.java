@@ -1,6 +1,7 @@
 package apps.controller.history;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -49,14 +50,20 @@ public class UserActivityWindow extends Window {
 	private Button deleteButton;
 	
 	private org.hibernate.Session _sessionSelect;
+	
+	private SimpleDateFormat _simpleDateFormat;
 
 	public UserActivityWindow(boolean isMine) {
 		super("My activity", null, true);
 		window = this;
 		_isMine = isMine;
+		if (!_isMine) {
+			setTitle("Users activity");
+		}
 		serviceMain = new ServiceImplMain();
 		window.setMaximizable(true);
 		window.setMaximized(true);
+		_simpleDateFormat = new SimpleDateFormat();
 
 		listbox = new Listbox();
 		listbox.setParent(window);
@@ -203,19 +210,19 @@ public class UserActivityWindow extends Window {
 						usernameSearchTextbox.getValue() + "%"));
 			} else if (!createdSearchTextbox.getValue().isEmpty()) {
 				Timestamp basic = serviceMain.convertToTimeStamp(
-						"dd/MM/yyyy HH:mm", createdSearchTextbox.getValue());
+						"dd/MM/yyyy HH:mm", createdSearchTextbox.getValue(), _simpleDateFormat);
 				if (basic == null) {
 					Timestamp lowTimestamp = serviceMain.convertToTimeStamp(
-							"dd/MM/yyyy", createdSearchTextbox.getValue());
+							"dd/MM/yyyy", createdSearchTextbox.getValue(), _simpleDateFormat);
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							createdSearchTextbox.getValue() + " 23:59:59");
+							createdSearchTextbox.getValue() + " 23:59:59", _simpleDateFormat);
 					criteria.add(Restrictions.between("createdAt",
 							lowTimestamp, highTimestamp));
 				} else {
 					Timestamp highTimestamp = serviceMain.convertToTimeStamp(
 							"dd/MM/yyyy HH:mm:ss",
-							createdSearchTextbox.getValue() + ":59");
+							createdSearchTextbox.getValue() + ":59", _simpleDateFormat);
 					criteria.add(Restrictions.between("createdAt", basic,
 							highTimestamp));
 				}
@@ -262,7 +269,7 @@ public class UserActivityWindow extends Window {
 			}
 			listitem.appendChild(new Listcell(serviceMain
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
-							userActivity.getCreatedAt())));
+							userActivity.getCreatedAt(), _simpleDateFormat)));
 			String notes = userActivity.getNotes();
 			if (notes.length() > 170) {
 				notes = notes.substring(0,170)+"...";

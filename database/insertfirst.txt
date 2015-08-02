@@ -1,11 +1,10 @@
-CREATE TABLE IF NOT EXISTS `tb_users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `username` varchar(200) NOT NULL,
-  `pass` varchar(200) NOT NULL,
-  `last_login` datetime DEFAULT NULL,
-  `isdeleted` tinyint(1) DEFAULT '1',
-  `divisi` varchar(50) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+truncate TABLE tb_activity;
+truncate TABLE tb_file;
+truncate TABLE tb_filesize_used;
+truncate TABLE tb_filetotal;
+truncate TABLE tb_query;
+truncate TABLE tb_users;
+truncate TABLE tb_users_query;
+truncate TABLE tb_user_activity;
 
 insert into tb_users (username, pass, divisi) values ('ade','6e8b6dba6e528580ae7881e7e818cb','Admin');

@@ -1,5 +1,6 @@
 package apps.controller.users;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -56,11 +57,14 @@ public class UsersWindow extends Window {
 	private Textbox emailSearchingTextbox;
 	
 	private Session _session;
+	
+	private SimpleDateFormat _simpleDateFormat;
 
 	public UsersWindow(String title) {
 		super(title, null, true);
 		singleWindow = this;
 		serviceMain = new ServiceImplMain();
+		_simpleDateFormat = new SimpleDateFormat();
 
 		org.zkoss.zk.ui.Session session = Sessions.getCurrent();
 		userLogin = (Users) session.getAttribute("userlogin");
@@ -440,7 +444,7 @@ public class UsersWindow extends Window {
 			row.appendChild(divisiLabel);
 			row.appendChild(new Label(user.getEmail()));
 			row.appendChild(new Label(serviceMain.convertStringFromDate(
-					"dd/MM/yyyy HH:mm", user.getLast_login())));
+					"dd/MM/yyyy HH:mm", user.getLast_login(), _simpleDateFormat)));
 		}
 	}
 

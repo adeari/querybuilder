@@ -1,5 +1,6 @@
 package apps.controller.history;
 
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -51,14 +52,17 @@ public class FileHistory extends Window {
 
 	private Button deleteButton;
 	
+	private SimpleDateFormat _simpleDateFormat;
+	
 	private org.hibernate.Session _sessionSelect;
 
 	public FileHistory() {
-		super("My activity", null, true);
+		super("File history", null, true);
 		window = this;
 		serviceMain = new ServiceImplMain();
 		window.setMaximizable(true);
 		window.setMaximized(true);
+		_simpleDateFormat = new SimpleDateFormat();
 
 		listbox = new Listbox();
 		listbox.setParent(window);
@@ -300,11 +304,11 @@ public class FileHistory extends Window {
 			if (!queryNameSearchTextbox.getValue().isEmpty()) {
 				criteria.add(Restrictions.like("queryName", queryNameSearchTextbox.getValue()+"%"));
 			} else if (!createdAtSearchTextbox.getValue().isEmpty()) {
-				criteria = serviceMain.getCriteriaAtDateBetween(criteria, "createdAt", createdAtSearchTextbox.getValue());
+				criteria = serviceMain.getCriteriaAtDateBetween(criteria, "createdAt", createdAtSearchTextbox.getValue(), _simpleDateFormat);
 			} else if (!startAtSearchTextbox.getValue().isEmpty()) {
-				criteria = serviceMain.getCriteriaAtDateBetween(criteria, "startAt", startAtSearchTextbox.getValue());
+				criteria = serviceMain.getCriteriaAtDateBetween(criteria, "startAt", startAtSearchTextbox.getValue(), _simpleDateFormat);
 			} else if (!doneAtSearchTextbox.getValue().isEmpty()) {
-				criteria = serviceMain.getCriteriaAtDateBetween(criteria, "doneAt", doneAtSearchTextbox.getValue());
+				criteria = serviceMain.getCriteriaAtDateBetween(criteria, "doneAt", doneAtSearchTextbox.getValue(), _simpleDateFormat);
 			} else if (!durationSearchTextbox.getValue().isEmpty()) {
 				criteria.add(Restrictions.like("showDuration", durationSearchTextbox.getValue()+"%"));
 			} else if (!memoryUsedSearchTextbox.getValue().isEmpty()) {
@@ -358,13 +362,13 @@ public class FileHistory extends Window {
 			listitem.appendChild(new Listcell(activity.getQueryName()));
 			listitem.appendChild(new Listcell(serviceMain
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
-							activity.getCreatedAt())));
+							activity.getCreatedAt(), _simpleDateFormat)));
 			listitem.appendChild(new Listcell(serviceMain
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
-							activity.getStartAt())));
+							activity.getStartAt(), _simpleDateFormat)));
 			listitem.appendChild(new Listcell(serviceMain
 					.convertStringFromDate("dd/MM/yyyy HH:mm",
-							activity.getDoneAt())));
+							activity.getDoneAt(), _simpleDateFormat)));
 			listitem.appendChild(new Listcell(activity.getShowDuration()));
 			
 			Listcell showMemoryUsedListcell = new Listcell(activity.getShowMemoryUsed());
