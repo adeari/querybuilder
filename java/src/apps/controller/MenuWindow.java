@@ -395,11 +395,10 @@ public class MenuWindow extends Window {
 		activityListbox = new Listbox();
 		activityListbox.setMold("paging");
 		activityListbox.setAutopaging(true);
-		activityListbox.setVflex(true);
 		activityListbox.setPagingPosition("bottom");
 		activityListbox.setEmptyMessage("No actifity");
 		activityListbox
-				.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%; height: 600px");
+				.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%; height: 559px;");
 		activityListbox.setItemRenderer(new ActivityItemRenderer());
 
 		Auxhead topAuxhead = new Auxhead();

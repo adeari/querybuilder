@@ -26,6 +26,7 @@ import org.zkoss.zul.Window;
 import apps.components.ListcellCustomize;
 import apps.controller.queryy.QueryListWindow;
 import apps.entity.QueryData;
+import apps.entity.UserActivity;
 import apps.entity.Users;
 import apps.entity.UsersQuery;
 import apps.service.CheckService;
@@ -155,9 +156,10 @@ public class QueryListForUSers extends Window {
 		userListhead.setParent(listbox);
 		userListhead.setSizable(true);
 
-		Listheader queryNameListheader = new Listheader("Query name");
+		Listheader queryNameListheader = new Listheader("Query name11");
 		queryNameListheader.setParent(userListhead);
 		queryNameListheader.setSort("auto(named)");
+		queryNameListheader.setWidth("200px");
 		Listheader sqlNameListheader = new Listheader("Query");
 		sqlNameListheader.setParent(userListhead);
 		sqlNameListheader.setSort("auto(sql_query)");
@@ -229,16 +231,39 @@ public class QueryListForUSers extends Window {
 		@Override
 		public void render(Listitem item, QueryData queryData, int index)
 				throws Exception {
+			item.setValue(queryData);
 			if (queryIDOnData.contains(queryData.getId())) {
 				item.setSelected(true);
 			}
 			item.appendChild(new ListcellCustomize(queryData.getNamed(),
 					queryData));
 			String sql = queryData.getSql();
-			if (sql.length() > 100) {
-				sql = sql.substring(0, 100) + "...";
+			if (sql.length() > 200) {
+				sql = sql.substring(0, 200) + "...";
 			}
 			item.appendChild(new Listcell(sql));
+			
+			item.addEventListener(Events.ON_DOUBLE_CLICK,
+					new EventListener<Event>() {
+				public void onEvent(Event listitemEvent) {
+					Listitem selectedListitem = (Listitem) listitemEvent.getTarget();
+					QueryData selectedQueryData = ((Listitem) listitemEvent.getTarget()).getValue();
+					
+					
+					Window detailWindow = new Window();
+					detailWindow.setParent(window);
+					detailWindow.setTitle("Query detail");
+					detailWindow.setClosable(true);
+					detailWindow.setMaximizable(true);
+					Textbox detailNotesTextbox = new Textbox(selectedQueryData.getSql());
+					detailNotesTextbox.setRows(6);
+					detailNotesTextbox.setWidth("400px");
+					detailNotesTextbox.setParent(detailWindow);
+					detailWindow.doModal();
+					
+				}
+			});
+			
 			item.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 				public void onEvent(Event itemEvent) {
 
