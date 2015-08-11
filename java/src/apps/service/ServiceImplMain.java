@@ -49,8 +49,9 @@ public class ServiceImplMain implements ServiceMain {
 			"microsoft.sql.DateTimeOffset" };
 
 	public String getPropSetting(String key) {
+		InputStream input = null;
 		try {
-			InputStream input = ServiceImplMain.class.getClassLoader()
+			input = ServiceImplMain.class.getClassLoader()
 					.getResourceAsStream(_fileproperties);
 
 			Properties prop = new Properties();
@@ -61,14 +62,23 @@ public class ServiceImplMain implements ServiceMain {
 			logger.error(ex.getMessage(), ex);
 		} catch (IOException ex) {
 			logger.error(ex.getMessage(), ex);
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException ex) {
+
+				}
+			}
 		}
 		return null;
 	}
 
 	public String getQuery(String key) {
+		InputStream input = null;
 		try {
-			InputStream input = ServiceImplMain.class.getClassLoader()
-					.getResourceAsStream(_queryProperties);
+			input = ServiceImplMain.class.getClassLoader().getResourceAsStream(
+					_queryProperties);
 			Properties prop = new Properties();
 			prop.load(input);
 			return prop.getProperty(key);
@@ -76,6 +86,14 @@ public class ServiceImplMain implements ServiceMain {
 			logger.error(ex.getMessage(), ex);
 		} catch (IOException ex) {
 			logger.error(ex.getMessage(), ex);
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException ex) {
+
+				}
+			}
 		}
 		return null;
 	}
@@ -246,13 +264,10 @@ public class ServiceImplMain implements ServiceMain {
 			valueInsert = "'" + valueInsert + "'";
 		} else if (columnType.equalsIgnoreCase("java.sql.Time")) {
 			simpleDateFormat.applyPattern("HH:mm:ss");
-			valueInsert = "'"
-					+ simpleDateFormat.format(new Date())
-					+ "'";
+			valueInsert = "'" + simpleDateFormat.format(new Date()) + "'";
 		} else if (Arrays.asList(columnTypeDate).contains(columnType)) {
 			simpleDateFormat.applyPattern("yyyy-MM-dd HH:mm:ss");
-			valueInsert = "'"
-					+ simpleDateFormat.format(new Date()) + "'";
+			valueInsert = "'" + simpleDateFormat.format(new Date()) + "'";
 		} else {
 			valueInsert = "1";
 		}
@@ -306,7 +321,8 @@ public class ServiceImplMain implements ServiceMain {
 		return user;
 	}
 
-	public Timestamp convertToTimeStamp(String format, String date, SimpleDateFormat simpleDateFormat) {
+	public Timestamp convertToTimeStamp(String format, String date,
+			SimpleDateFormat simpleDateFormat) {
 		if (date == null || (date.isEmpty())) {
 			return null;
 		}
@@ -367,8 +383,10 @@ public class ServiceImplMain implements ServiceMain {
 	}
 
 	public Criteria getCriteriaAtDateBetween(Criteria criteria,
-			String columnName, String dateString, SimpleDateFormat simpleDateFormat) {
-		Timestamp basic = convertToTimeStamp("HH:mm:ss", dateString, simpleDateFormat);
+			String columnName, String dateString,
+			SimpleDateFormat simpleDateFormat) {
+		Timestamp basic = convertToTimeStamp("HH:mm:ss", dateString,
+				simpleDateFormat);
 		if (basic == null) {
 			Timestamp lowTimestamp = convertToTimeStamp("dd/MM/yyyy",
 					dateString, simpleDateFormat);

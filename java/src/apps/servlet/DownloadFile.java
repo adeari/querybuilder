@@ -35,7 +35,7 @@ public class DownloadFile extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Logger logger = Logger.getLogger(DownloadFile.class);
 	private ServiceMain serviceMain;
-	
+
 	private org.hibernate.Session _sessionSelect;
 
 	/**
@@ -137,7 +137,8 @@ public class DownloadFile extends HttpServlet {
 						criteria.add(Restrictions.eq("userData", user));
 						criteria.add(Restrictions.eq("queryData", queryData));
 						if (((long) criteria.uniqueResult()) == 0) {
-							showMessage(response, "You don't have access for this file");
+							showMessage(response,
+									"You don't have access for this file");
 							return;
 						} else {
 							filesData = activity.getFileData();
@@ -154,35 +155,58 @@ public class DownloadFile extends HttpServlet {
 						+ filesData.getFiletype().toLowerCase())
 						+ "/" + filesData.getFilename();
 				File downloadFile = new File(filePath);
+
 				if (downloadFile.isFile()) {
-					FileInputStream inStream = new FileInputStream(downloadFile);
-					ServletContext context = getServletContext();
 
-					String mimeType = context.getMimeType(filePath);
-					if (mimeType == null) {
-						mimeType = "application/octet-stream";
+					FileInputStream inStream = null;
+					OutputStream outStream = null;
+					try {
+
+						inStream = new FileInputStream(downloadFile);
+						ServletContext context = getServletContext();
+
+						String mimeType = context.getMimeType(filePath);
+						if (mimeType == null) {
+							mimeType = "application/octet-stream";
+						}
+
+						response.setContentType(mimeType);
+						response.setContentLength((int) downloadFile.length());
+
+						String headerKey = "Content-Disposition";
+						String headerValue = String.format(
+								"attachment; filename=\"%s\"",
+								downloadFile.getName());
+						response.setHeader(headerKey, headerValue);
+
+						outStream = response.getOutputStream();
+
+						byte[] buffer = new byte[4096];
+						int bytesRead = -1;
+
+						while ((bytesRead = inStream.read(buffer)) != -1) {
+							outStream.write(buffer, 0, bytesRead);
+						}
+					} catch (Exception ex) {
+
+					} finally {
+
+						if (inStream != null) {
+							try {
+								inStream.close();
+							} catch (IOException ex) {
+
+							}
+						}
+						if (outStream != null) {
+							try {
+								outStream.close();
+							} catch (IOException ex) {
+
+							}
+						}
 					}
 
-					response.setContentType(mimeType);
-					response.setContentLength((int) downloadFile.length());
-
-					String headerKey = "Content-Disposition";
-					String headerValue = String.format(
-							"attachment; filename=\"%s\"",
-							downloadFile.getName());
-					response.setHeader(headerKey, headerValue);
-
-					OutputStream outStream = response.getOutputStream();
-
-					byte[] buffer = new byte[4096];
-					int bytesRead = -1;
-
-					while ((bytesRead = inStream.read(buffer)) != -1) {
-						outStream.write(buffer, 0, bytesRead);
-					}
-
-					inStream.close();
-					outStream.close();
 				} else {
 					showMessage(response, "This file not exist");
 				}
