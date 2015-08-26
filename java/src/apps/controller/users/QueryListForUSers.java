@@ -156,7 +156,7 @@ public class QueryListForUSers extends Window {
 		userListhead.setParent(listbox);
 		userListhead.setSizable(true);
 
-		Listheader queryNameListheader = new Listheader("Query name11");
+		Listheader queryNameListheader = new Listheader("Query name");
 		queryNameListheader.setParent(userListhead);
 		queryNameListheader.setSort("auto(named)");
 		queryNameListheader.setWidth("200px");
@@ -218,8 +218,16 @@ public class QueryListForUSers extends Window {
 						namedSearchingTextbox.getValue() + "%"));
 			}
 			List<QueryData> queryDatas = criteria.list();
-			queryListModelList = new ListModelList<QueryData>(queryDatas);
-			listbox.setModel(queryListModelList);
+			if (queryListModelList == null) {
+				queryListModelList = new ListModelList<QueryData>(queryDatas);
+				queryListModelList.setMultiple(true);
+				listbox.setModel(queryListModelList);
+			} else {
+				queryListModelList.clear();
+				queryListModelList.addAll(queryDatas);
+				queryListModelList.setMultiple(true);
+			}
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
@@ -324,9 +332,6 @@ public class QueryListForUSers extends Window {
 				}
 
 			});
-			if (!listbox.isMultiple()) {
-				listbox.setMultiple(true);
-			}
 		}
 	}
 }

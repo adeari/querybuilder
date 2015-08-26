@@ -24,7 +24,7 @@ public class TimerMain {
 		serviceMain = new ServiceMain();
 		timer = new Timer();
 		// in 1 minutes
-		timer.schedule(new RemindTask(), 0, 60 * 1000);
+		timer.schedule(new RemindTask(), 500, 60 * 1000);
 
 		// in 1 seconds
 		// timer.schedule(new RemindTask(), 0, 1 * 1000);

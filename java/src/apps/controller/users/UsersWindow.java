@@ -466,8 +466,13 @@ public class UsersWindow extends Window {
 			}
 
 			List<Users> users = criteria.list();
-			usersListModelList = new ListModelList<Users>(users);
-			grid.setModel(usersListModelList);
+			if (usersListModelList == null) {
+				usersListModelList = new ListModelList<Users>(users);
+				grid.setModel(usersListModelList);
+			} else {
+				usersListModelList.clear();
+				usersListModelList.addAll(users);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 

@@ -88,6 +88,7 @@ public class QuerySavedWindow extends Window {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter table name");
 								tableNameTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 
@@ -105,6 +106,7 @@ public class QuerySavedWindow extends Window {
 											.setValue("Table name already exist");
 									tableNameTextbox.setFocus(true);
 									tableNameTextbox.select();
+									saveButton.setDisabled(false);
 									return;
 								}
 

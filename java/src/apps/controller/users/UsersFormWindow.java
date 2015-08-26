@@ -162,12 +162,14 @@ public class UsersFormWindow extends Window {
 								commentLabel.setValue("Enter user name");
 								div.setVisible(true);
 								usernameTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 							if (emailTextbox.getValue().isEmpty()) {
 								commentLabel.setValue("Enter email");
 								div.setVisible(true);
 								emailTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 
@@ -189,6 +191,7 @@ public class UsersFormWindow extends Window {
 												.setValue("This username already exist");
 										div.setVisible(true);
 										usernameTextbox.setFocus(true);
+										saveButton.setDisabled(false);
 										return;
 									}
 								} catch (Exception e) {
@@ -206,6 +209,7 @@ public class UsersFormWindow extends Window {
 											.setValue("This email not correct email");
 									div.setVisible(true);
 									emailTextbox.setFocus(true);
+									saveButton.setDisabled(false);
 									return;
 								}
 							}
@@ -228,6 +232,7 @@ public class UsersFormWindow extends Window {
 												.setValue("This email already exist");
 										div.setVisible(true);
 										emailTextbox.setFocus(true);
+										saveButton.setDisabled(false);
 										return;
 									}
 								} catch (Exception e) {
@@ -241,6 +246,7 @@ public class UsersFormWindow extends Window {
 									commentLabel.setValue("Enter password");
 									div.setVisible(true);
 									passwordTextbox.setFocus(true);
+									saveButton.setDisabled(false);
 									return;
 								}
 
@@ -248,6 +254,7 @@ public class UsersFormWindow extends Window {
 									commentLabel.setValue("Enter re password");
 									div.setVisible(true);
 									password2Textbox.setFocus(true);
+									saveButton.setDisabled(false);
 									return;
 								}
 							}
@@ -259,6 +266,7 @@ public class UsersFormWindow extends Window {
 											.setValue("Enter more then 5 characters");
 									div.setVisible(true);
 									passwordTextbox.setFocus(true);
+									saveButton.setDisabled(false);
 									return;
 								}
 
@@ -271,6 +279,7 @@ public class UsersFormWindow extends Window {
 									commentLabel.setValue("password not same");
 									div.setVisible(true);
 									password2Textbox.setFocus(true);
+									saveButton.setDisabled(false);
 									return;
 								}
 							}

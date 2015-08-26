@@ -53,11 +53,19 @@ public class CheckService {
 			if (userCount > 0 && user.isIsdeleted()) {
 				user.setIsdeleted(false);
 				querySession.update(user);
-				querySession.flush();
+				try {
+					querySession.flush();
+				} catch (Exception ex) {
+					
+				}
 			} else if (userCount <= 0 && !user.isIsdeleted()) {
 				user.setIsdeleted(true);
 				querySession.update(user);
-				querySession.flush();
+				try {
+					querySession.flush();
+				} catch (Exception ex) {
+					
+				}
 			}
 		}
 	}
@@ -75,11 +83,19 @@ public class CheckService {
 			if (cuntData > 0 && queryData.isDeleted()) {
 				queryData.setDeleted(false);
 				querySession.update(queryData);
-				querySession.flush();
+				try {
+					querySession.flush();
+				} catch (Exception ex) {
+					
+				}
 			} else if (cuntData <= 0 && !queryData.isDeleted()) {
 				queryData.setDeleted(true);
 				querySession.update(queryData);
-				querySession.flush();
+				try {
+					querySession.flush();
+				} catch (Exception ex) {
+					
+				}
 			}
 		}
 

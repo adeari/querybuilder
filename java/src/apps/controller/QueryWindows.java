@@ -156,17 +156,20 @@ public class QueryWindows extends Window {
 								.getSessionFactory(_querySession);
 
 						if (_driverName == null || (_driverName.isEmpty())) {
+							saveQueryButton.setDisabled(false);
 							Messagebox.show("Please choose Table on left",
 									"Information", Messagebox.OK,
 									Messagebox.INFORMATION);
 							return;
 						} else if (_url == null || (_url.isEmpty())) {
+							saveQueryButton.setDisabled(true);
 							Messagebox.show("Please choose Table on left",
 									"Information", Messagebox.OK,
 									Messagebox.INFORMATION);
 							return;
 						} else if (textQuery.getValue().isEmpty()) {
 							textQuery.setFocus(true);
+							saveQueryButton.setDisabled(true);
 							Messagebox.show("Enter query", "Information",
 									Messagebox.OK, Messagebox.INFORMATION);
 							return;
@@ -186,6 +189,7 @@ public class QueryWindows extends Window {
 								}
 								preparedStatement.close();
 							} catch (Exception e) {
+								saveQueryButton.setDisabled(true);
 								logger.error(e.getMessage(), e);
 								Messagebox.show("Query syntax was wrong",
 										"Information", Messagebox.OK,

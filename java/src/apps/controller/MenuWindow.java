@@ -96,6 +96,8 @@ public class MenuWindow extends Window {
 	private org.hibernate.Session _querySession;
 	
 	private SimpleDateFormat _simpleDateFormat;
+	
+	private ListModelList<Activity> listModelList;
 
 	public MenuWindow(Window windowMain) {
 		super(null, null, false);
@@ -393,9 +395,11 @@ public class MenuWindow extends Window {
 		totalFileSizeTextbox.setStyle("text-align: right; margin: 0 20px 0 0;");
 
 		activityListbox = new Listbox();
+		listModelList = new ListModelList<Activity>();
+		activityListbox.setModel(listModelList);
 		activityListbox.setMold("paging");
+		activityListbox.setVflex(true);
 		activityListbox.setAutopaging(true);
-		activityListbox.setPagingPosition("bottom");
 		activityListbox.setEmptyMessage("No actifity");
 		activityListbox
 				.setStyle("position: relative; bottom:0; right:0; left:0;border-style:none; width: 100%; height: 559px;");
@@ -585,6 +589,9 @@ public class MenuWindow extends Window {
 
 	private void refreshActivityListbox() {
 		try {
+			
+			listModelList.clear();
+			
 			_querySession = hibernateUtil.getSessionFactory(_querySession);
 			_querySession.clear();
 			Criteria criteria = _querySession.createCriteria(Activity.class);
@@ -648,9 +655,8 @@ public class MenuWindow extends Window {
 					&& activityListbox.getParent() == null) {
 				activityListbox.setParent(vlayout);
 			}
-
-			activityListbox.setModel(new ListModelList<Activity>(
-					(List<Activity>) criteria.list()));
+			
+			listModelList.addAll((List<Activity>) criteria.list());
 
 			if (_user.getDivisi().equalsIgnoreCase("admin")) {
 				criteria = _querySession.createCriteria(FileSizeTotal.class);

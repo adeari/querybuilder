@@ -103,18 +103,21 @@ public class ChangePasswordWindow extends Window {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter old password");
 								passwordOldTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 							if (passwordTextbox.getValue().isEmpty()) {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter new password");
 								passwordTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 							if (rePasswordTextbox.getValue().isEmpty()) {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Enter re new password");
 								rePasswordTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 
@@ -124,6 +127,7 @@ public class ChangePasswordWindow extends Window {
 								commentLabel
 										.setValue("New password is not same");
 								rePasswordTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 							Session sessionZK = Sessions.getCurrent();
@@ -136,6 +140,7 @@ public class ChangePasswordWindow extends Window {
 								commentLabel.setVisible(true);
 								commentLabel.setValue("Wrong old password");
 								passwordOldTextbox.setFocus(true);
+								saveButton.setDisabled(false);
 								return;
 							}
 

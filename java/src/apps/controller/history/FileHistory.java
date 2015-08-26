@@ -13,6 +13,7 @@ import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Image;
+import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listcell;
@@ -29,6 +30,7 @@ import org.zkoss.zul.Window;
 import apps.components.ButtonCustom;
 import apps.controller.activity.ActivityDetailWindow;
 import apps.entity.Activity;
+import apps.entity.QueryData;
 import apps.entity.UserActivity;
 import apps.service.ServiceImplMain;
 import apps.service.ServiceMain;
@@ -318,8 +320,18 @@ public class FileHistory extends Window {
 				criteria.add(Restrictions.like("fileData.filesizeToShow", fileSizedSearchTextbox.getValue()+"%"));
 			}
 			
-			listbox.setModel(new ListModelList<UserActivity>(
-					(List<UserActivity>) criteria.list()));
+			if (listbox.getModel() == null) {
+				listbox.setModel(new ListModelList<UserActivity>(
+						(List<UserActivity>) criteria.list()));
+				listbox.setMultiple(true);
+			} else {
+				ListModel<UserActivity> userActivityListModel = listbox.getModel();
+				ListModelList<UserActivity> userActifityListModelList = (ListModelList<UserActivity>) userActivityListModel;
+				userActifityListModelList.clear();
+				userActifityListModelList.addAll(criteria.list());
+				userActifityListModelList.setMultiple(true);
+			}
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
@@ -379,10 +391,6 @@ public class FileHistory extends Window {
 					.getFilesizeToShow());
 			fileSizeListcell.setParent(listitem);
 			fileSizeListcell.setStyle("text-align: right");
-			
-			if (!listbox.isMultiple()) {
-				listbox.setMultiple(true);
-			}
 		}
 	}
 

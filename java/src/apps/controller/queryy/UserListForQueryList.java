@@ -250,8 +250,15 @@ public class UserListForQueryList extends Window {
 						.like("username", usernameSearch + "%").ignoreCase());
 			}
 			List<Users> users = criteria.list();
-			userListModelList = new ListModelList<Users>(users);
-			userListbox.setModel(userListModelList);
+			if (userListModelList == null) {
+				userListModelList = new ListModelList<Users>(users);
+				userListModelList.setMultiple(true);
+				userListbox.setModel(userListModelList);
+			} else {
+				userListModelList.clear();
+				userListModelList.addAll(users);
+				userListModelList.setMultiple(true);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
@@ -308,8 +315,8 @@ public class UserListForQueryList extends Window {
 									.uniqueResult();
 							_session.delete(usersQuery);
 							_session.flush();
-							checkService.queryIsDeleted(_session, _queryData);
 							checkService.userIsDeleted(_session, userSelected);
+							checkService.queryIsDeleted(_session, _queryData);
 							serviceMain.saveUserActivity(_session,
 									"Remove user " + userSelected.getUsername()
 											+ " in " + _queryData.getNamed());
@@ -327,9 +334,6 @@ public class UserListForQueryList extends Window {
 					user.getUsername(), user);
 
 			usernameListcell.setParent(item);
-			if (!userListbox.isMultiple()) {
-				userListbox.setMultiple(true);
-			}
 		}
 	}
 }

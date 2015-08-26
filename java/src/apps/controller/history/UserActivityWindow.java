@@ -15,6 +15,7 @@ import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Image;
+import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listcell;
@@ -169,7 +170,6 @@ public class UserActivityWindow extends Window {
 								"Question", Messagebox.YES | Messagebox.NO,
 								Messagebox.QUESTION) == Messagebox.YES) {
 
-							org.hibernate.Session sessionDelete = null;
 							try {
 								_sessionSelect = hibernateUtil
 										.getSessionFactory(_sessionSelect);
@@ -177,7 +177,7 @@ public class UserActivityWindow extends Window {
 										.getSelectedItems()) {
 									UserActivity userActivity = listitem
 											.getValue();
-									sessionDelete.delete(userActivity);
+									_sessionSelect.delete(userActivity);
 									_sessionSelect.flush();
 								}
 								
@@ -230,8 +230,19 @@ public class UserActivityWindow extends Window {
 				criteria.add(Restrictions.like("notes",
 						notesSearchTextbox.getValue() + "%"));
 			}
-			listbox.setModel(new ListModelList<UserActivity>(
-					(List<UserActivity>) criteria.list()));
+			if (listbox.getModel() == null) {
+				ListModelList<UserActivity> userActifityListModelList = new ListModelList<UserActivity>(
+						(List<UserActivity>) criteria.list());
+				userActifityListModelList.setMultiple(true);
+				listbox.setModel(userActifityListModelList);
+			} else {
+				ListModel<UserActivity> userActivityListModel = listbox.getModel();
+				ListModelList<UserActivity> userActifityListModelList = (ListModelList<UserActivity>) userActivityListModel;
+				userActifityListModelList.clear();
+				userActifityListModelList.addAll(criteria.list());
+				userActifityListModelList.setMultiple(true);
+			}
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}
@@ -275,9 +286,6 @@ public class UserActivityWindow extends Window {
 				notes = notes.substring(0,170)+"...";
 			}
 			listitem.appendChild(new Listcell(notes));
-			if (!listbox.isMultiple()) {
-				listbox.setMultiple(true);
-			}
 		}
 	}
 

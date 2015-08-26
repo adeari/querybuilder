@@ -64,6 +64,7 @@ public class QueryData implements Serializable  {
 		modifiedBy = modifiedBy1;
 		createdAt = new java.sql.Timestamp(createdAt1.getTime());
 		modifiedAt = new java.sql.Timestamp(modifiedAt1.getTime());
+		isDeleted = true;
 	}
 	
 	public QueryData() {

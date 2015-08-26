@@ -430,10 +430,11 @@ public class QueryListWindow extends Window {
 									.getTarget();
 							if (!buttonSelected.isDisabled()) {
 								buttonSelected.setDisabled(true);
+								QueryData queryDataSelected = (QueryData) buttonSelected
+										.getDataObject();
 								UserListForQueryList userListForQueryList = new UserListForQueryList(
-										"Query properties",
-										(QueryData) buttonSelected
-												.getDataObject());
+										"Query "+queryDataSelected.getNamed()+" properties",
+										queryDataSelected);
 								userListForQueryList.setParent(queryListWindow);
 								userListForQueryList.doModal();
 
@@ -509,8 +510,14 @@ public class QueryListWindow extends Window {
 						modifiedBySearchingTextbox.getValue() + "%"));
 			}
 			List<QueryData> queryDatas = criteria.list();
-			queryListModelList = new ListModelList<QueryData>(queryDatas);
-			grid.setModel(queryListModelList);
+			if (queryListModelList == null) {
+				queryListModelList = new ListModelList<QueryData>(queryDatas);
+				grid.setModel(queryListModelList);
+			} else {
+				queryListModelList.clear();
+				queryListModelList.addAll(queryDatas);
+			}
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 

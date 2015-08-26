@@ -14,6 +14,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Auxhead;
 import org.zkoss.zul.Auxheader;
 import org.zkoss.zul.Image;
+import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listcell;
@@ -155,7 +156,16 @@ public class QueryOperation extends Window {
 				}
 			}
 			List<QueryData> queryDatas = criteria.list();
-			listbox.setModel(new ListModelList<QueryData>(queryDatas));
+			if (listbox.getModel() == null) {
+				listbox.setModel(new ListModelList<QueryData>(queryDatas));
+				listbox.setMultiple(true);
+			} else {
+				ListModel<QueryData> userListModel = listbox.getModel();
+				ListModelList<QueryData> userListModelList = (ListModelList<QueryData>) userListModel;
+				userListModelList.clear();
+				userListModelList.addAll(queryDatas);
+				userListModelList.setMultiple(true);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 

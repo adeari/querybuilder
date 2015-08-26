@@ -1,6 +1,5 @@
 package apps.controller.users;
 
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -15,6 +14,7 @@ import org.zkoss.zul.Auxheader;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Image;
+import org.zkoss.zul.ListModel;
 import org.zkoss.zul.ListModelList;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listcell;
@@ -27,7 +27,6 @@ import org.zkoss.zul.ListitemRenderer;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 
-import apps.controller.queryy.UserListForQueryList;
 import apps.entity.Users;
 import apps.service.hibernateUtil;
 
@@ -150,8 +149,17 @@ public class UserEmailWindow  extends Window {
 				criteria.add(Restrictions.like("email", emailSearchTextbox.getValue()+"%"));
 			}
 			List<Users> users = criteria.list();
-			ListModelList<Users> userListModelList = new ListModelList<Users>(users);
-			usersListbox.setModel(userListModelList);
+			if (usersListbox.getModel() == null) {
+				ListModelList<Users> userListModelList = new ListModelList<Users>(users);
+				userListModelList.setMultiple(true);
+				usersListbox.setModel(userListModelList);
+			} else {
+				ListModel<Users> userListModel = usersListbox.getModel();
+				ListModelList<Users> userListModelList = (ListModelList<Users>) userListModel;
+				userListModelList.clear();
+				userListModelList.addAll(users);
+				userListModelList.setMultiple(true);
+			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 
@@ -169,9 +177,6 @@ public class UserEmailWindow  extends Window {
 				throws Exception {
 			item.appendChild(new Listcell(user.getUsername()));
 			item.appendChild(new Listcell(user.getEmail()));
-			if (!usersListbox.isMultiple()) {
-				usersListbox.setMultiple(true);
-			}
 		}
 	}
 }
