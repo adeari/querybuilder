@@ -132,7 +132,7 @@ public class UserActivityWindow extends Window {
 		searchImage.setParent(createdAuxheader);
 		searchImage.setStyle("margin: 0 0 0 6px");
 
-		Listheader notesListheader = new Listheader("Activity date");
+		Listheader notesListheader = new Listheader("Activity");
 		notesListheader.setParent(listhead);
 		notesListheader.setSort("auto(createdAt)");
 

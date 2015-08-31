@@ -75,6 +75,7 @@ public class CheckService {
 		if (queryData != null) {
 			long cuntData = 0;
 			querySession = hibernateUtil.getSessionFactory(querySession);
+			querySession.clear();
 			Criteria criteria = querySession.createCriteria(UsersQuery.class)
 					.setProjection(Projections.rowCount());
 			criteria.add(Restrictions.eq("queryData", queryData));
